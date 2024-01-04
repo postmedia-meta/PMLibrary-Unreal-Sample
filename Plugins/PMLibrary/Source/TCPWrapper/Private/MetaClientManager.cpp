@@ -35,33 +35,13 @@ void UMetaClientManager::ReceiveProto(const TArray<uint8>& Bytes)
 	receiver.receive(Bytes.GetData(), Bytes.Num());
 }
 
-// void UMetaClientManager::Ping()
-// {
-// 	SendMetaMessage(TEXT("PING"));
-// }
-
-// void UMetaClientManager::SendMetaMessage(const FString& type)
-// {
-// 	proto::MetaMessage message;
-// 	message.body.type = TCHAR_TO_UTF8(*type);
-//
-// 	// Serialize the account to the FBE stream
-// 	FBE::proto::MetaMessageModel writer;
-// 	writer.serialize(message);
-// 	if (writer.Verify())
-// 	{
-// 		TArray Bytes(writer.buffer().data(), writer.buffer().size());
-// 		TCPClient->Emit(Bytes);
-// 	}
-// }
-
-// Han
 void UMetaClientManager::Ping()
 {
 	FMetaMessage Message;
 	Message.Type = TEXT("PING");
 	Message.Number = 0;
 	Message.Text = nullptr;
+	
 	SendMetaMessage(Message);
 }
 
@@ -70,7 +50,6 @@ void UMetaClientManager::ResetBuffer()
 	receiver.reset();
 }
 
-// Han
 void UMetaClientManager::SendMetaMessage(const FMetaMessage& MetaMessage)
 {
 	proto::MetaMessage message;
@@ -88,6 +67,22 @@ void UMetaClientManager::SendMetaMessage(const FMetaMessage& MetaMessage)
 	}
 }
 
+void UMetaClientManager::SendMetaBinaryMessage(const FMetaBinaryMessage& MetaBinaryMessage)
+{
+	proto::MetaBinaryMessage message;
+	message.body.type = TCHAR_TO_UTF8(*MetaBinaryMessage.Type);
+	message.body.data = TArrayToStdVector(MetaBinaryMessage.Buffer);
+	message.body.info = TCHAR_TO_UTF8(*MetaBinaryMessage.Info);
+
+	// Serialize the account to the FBE stream
+	FBE::proto::MetaBinaryMessageModel writer;
+	writer.serialize(message);
+	if (writer.Verify())
+	{
+		TArray Bytes(writer.buffer().data(), writer.buffer().size());
+		TCPClient->Emit(Bytes);
+	}
+}
 
 void MyReceiver::onReceive(const proto::MetaMessage& value)
 {
@@ -103,14 +98,6 @@ void MyReceiver::onReceive(const proto::MetaMessage& value)
 	MetaClientManager->OnMetaMessage.Broadcast(message);
 }
 
-// Han
-// void MyReceiver::onReceive(const proto::MetaBinaryMessage& value)
-// {
-// 	Receiver::onReceive(value);
-// 	PM_LOG("MyReceiver onReceive MetaBinaryMessage");
-// }
-
-// Han
 void MyReceiver::onReceive(const proto::MetaBinaryMessage& value)
 {
 	Receiver::onReceive(value);
@@ -173,7 +160,7 @@ void MyReceiver::onReceive(const proto::LiDARMapperMessage& value)
 	
 	PM_LOG("MyReceiver onReceive LiDARMapperMessage type: %s", *message.body.screen);
 	
-	MetaClientManager->OnFLiDARMapperMessage.Broadcast(message);
+	MetaClientManager->OnLiDARMapperMessage.Broadcast(message);
 }
 
 void MyReceiver::onReceiveLog(const std::string& message) const

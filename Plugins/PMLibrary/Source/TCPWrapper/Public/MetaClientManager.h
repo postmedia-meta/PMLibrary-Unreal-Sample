@@ -75,7 +75,6 @@ struct FLiDARMapperMessage
 	FLiDARFrameData body;
 };
 
-// Han
 USTRUCT(BlueprintType)
 struct FMetaBinaryMessage
 {
@@ -96,7 +95,7 @@ struct FMetaBinaryMessage
 // DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam	// 1:N
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMetaMessage, const FMetaMessage&, Message);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFLiDARMapperMessage, const FLiDARMapperMessage&, Message);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMetaBinaryMessage, const FMetaBinaryMessage&, Message); // Han
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMetaBinaryMessage, const FMetaBinaryMessage&, Message);
 
 
 class MyReceiver : public FBE::proto::Receiver
@@ -110,8 +109,6 @@ protected:
 public:
 	UMetaClientManager *MetaClientManager;
 };
-
-
 
 UCLASS(ClassGroup = "Networking", meta = (BlueprintSpawnableComponent))
 class TCPWRAPPER_API UMetaClientManager : public UActorComponent
@@ -128,21 +125,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Meta Client")
 	void ResetBuffer();
 	
-	// UFUNCTION(BlueprintCallable)
-	// void SendMetaMessage(const FString& Type);
-
-	// Han
-	UFUNCTION(BlueprintCallable, Category="Meta Client")
+	UFUNCTION(BlueprintCallable, Category="Meta Client|SendMessage")
 	void SendMetaMessage(const FMetaMessage& MetaMessage);
+
+	UFUNCTION(BlueprintCallable, Category="Meta Client|SendMessage")
+	void SendMetaBinaryMessage(const FMetaBinaryMessage& MetaBinaryMessage);
 
 	UPROPERTY(BlueprintAssignable, Category = "Meta Client Events")
 	FOnMetaMessage OnMetaMessage;
 
 	UPROPERTY(BlueprintAssignable, Category = "Meta Client Events")
-	FOnFLiDARMapperMessage OnFLiDARMapperMessage;
-
-	UPROPERTY(BlueprintAssignable, Category = "Meta Client Events") // Han
 	FOnMetaBinaryMessage OnMetaBinaryMessage;
+
+	UPROPERTY(BlueprintAssignable, Category = "Meta Client Events")
+	FOnFLiDARMapperMessage OnLiDARMapperMessage;
 
 	UPROPERTY(EditAnywhere, BluePrintReadWrite, Category = "Server")
 	UTCPClientComponent *TCPClient;
@@ -154,4 +150,20 @@ public:
 
 private:
 	MyReceiver receiver;
+
+	static const std::vector<uint8_t>& TArrayToStdVector(const TArray<uint8>& Buffer);
 };
+
+inline const std::vector<uint8_t>& UMetaClientManager::TArrayToStdVector(const TArray<uint8>& Buffer)
+{
+	static std::vector<uint8_t> Vector;
+	Vector.clear();
+	Vector.resize(Buffer.Num());
+	
+	for(int i = 0; i < Buffer.Num(); i++)
+	{
+		Vector[i] = Buffer[i];
+	}
+	
+	return Vector;
+}
