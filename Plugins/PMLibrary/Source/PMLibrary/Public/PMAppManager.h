@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Misc/ConfigCacheIni.h"
 #include "UObject/Object.h"
 #include "PMAppManager.generated.h"
 
@@ -15,6 +16,6 @@ class PMLIBRARY_API UPMAppManager : public UObject
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, Category="PostMedia")
 	static FString GetProjectVersion();
 };

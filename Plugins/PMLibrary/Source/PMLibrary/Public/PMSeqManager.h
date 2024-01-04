@@ -48,10 +48,10 @@ private:
 	inline static int SendID;
 	
 public:
-	UFUNCTION(BlueprintPure, meta=(DisplayName = "Get PMSeqManager"))
+	UFUNCTION(BlueprintPure, meta=(DisplayName = "Get PMSeqManager"), Category="PostMedia")
 	static UPMSeqManager* Get();
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="PostMedia")
 	static void InvalidateInstance();
 
 	UPROPERTY(EditAnywhere, BluePrintReadWrite, Category = "Config")
@@ -60,10 +60,10 @@ public:
 	UPROPERTY(EditAnywhere, BluePrintReadWrite, Category = "Config")
 	FString ApiKey;
 
-	UFUNCTION(BlueprintCallable, meta=(DisplayName = "PM Log", AdvancedDisplay = "1"))
+	UFUNCTION(BlueprintCallable, meta=(DisplayName = "PM Log", AdvancedDisplay = "1"), Category="PostMedia")
 	static void Log(const FString& Text, const EPMLogLevel LogLevel, bool bPrintToScreen = true, bool bSendToServer = false);
 
-	UFUNCTION(BlueprintCallable, meta=(AutoCreateRefTerm="Params", DisplayName = "PM Seq Log", AdvancedDisplay = "2"))
+	UFUNCTION(BlueprintCallable, meta=(AutoCreateRefTerm="Params", DisplayName = "PM Seq Log", AdvancedDisplay = "2"), Category="PostMedia")
 	static void SeqLog(const FString& Text, const EPMSeqLogLevel SeqLogLevel, const TMap<FString, FString>& Params, bool bPrintToLog = true, bool bPrintToScreen = true, bool bSendToServer = true);
 	void Log(const FString& Text, const EPMSeqLogLevel SeqLogLevel, const FString& Function, int Line, const TMap<FString, FString>& Params = {});
 

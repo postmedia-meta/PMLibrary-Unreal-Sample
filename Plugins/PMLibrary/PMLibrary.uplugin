@@ -18,7 +18,28 @@
 		{
 			"Name": "PMLibrary",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [
+				"Win64"
+			],
+			"BlacklistPlatforms": [
+				"IOS",
+				"Linux",
+				"Android"
+			]
+		},
+		{
+			"Name": "TCPWrapper",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [
+				"Win64"
+			],
+			"BlacklistPlatforms": [
+				"IOS",
+				"Linux",
+				"Android"
+			]
 		}
 	]
 }

@@ -1,13 +1,16 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2018 Epic Games, Inc. All Rights Reserved.
 
 using UnrealBuildTool;
 
-public class PMLibrary : ModuleRules
+public class TCPWrapper : ModuleRules
 {
-	public PMLibrary(ReadOnlyTargetRules Target) : base(Target)
+	public TCPWrapper(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
+		// Error fixed _WIN32_WINNT_WIN10_*
+		bEnableUndefinedIdentifierWarnings = false;
+
 		PublicIncludePaths.AddRange(
 			new string[] {
 				// ... add public include paths required here ...
@@ -26,12 +29,8 @@ public class PMLibrary : ModuleRules
 			new string[]
 			{
 				"Core",
-				
-				"HTTP",
-				"Json",
-				"JsonUtilities",
-
 				"Sockets",
+				"Networking"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

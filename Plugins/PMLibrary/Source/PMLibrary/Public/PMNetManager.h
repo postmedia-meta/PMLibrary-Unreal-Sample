@@ -32,11 +32,11 @@ class PMLIBRARY_API UPMNetManager : public UObject
 
 public:
 	
-	UFUNCTION(BlueprintCallable, meta=(AutoCreateRefTerm="Headers, OnResponse, OnError", DisplayName = "PM HTTP Request", AdvancedDisplay = "2"))
+	UFUNCTION(BlueprintCallable, meta=(AutoCreateRefTerm="Headers, OnResponse, OnError", DisplayName = "PM HTTP Request", AdvancedDisplay = "2"), Category="PostMedia")
 	static void Request(const FString& URL, const EHttpMethod Method, const TMap<FString, FString>& Headers, const FString& ContentString, const FOnResponse& OnResponse, const FOnError& OnError, const bool bPrintToLog = true);
 	static void Request(const FString& URL, const EHttpMethod Method = EHttpMethod::GET, const TMap<FString, FString>& Headers = {}, const FString& ContentString = "", TFunction<void(const FString& Response)>&& OnResponse = nullptr, TFunction<void(const FString& Status)>&& OnError = nullptr, const bool bPrintToLog = true);
 
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, Category="PostMedia")
 	static FString GetMyIpAddress();
 
 private:

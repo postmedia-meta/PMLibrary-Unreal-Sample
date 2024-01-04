@@ -1,5 +1,7 @@
 #include "PMSeqManager.h"
 
+#include "Policies/CondensedJsonPrintPolicy.h"
+#include "Serialization/JsonWriter.h"
 #include "JsonObjectConverter.h"
 #include "PMAppManager.h"
 #include "PMLogMacros.h"
