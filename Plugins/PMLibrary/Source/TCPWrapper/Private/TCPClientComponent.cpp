@@ -8,11 +8,6 @@
 #include "SocketSubsystem.h"
 #include "Kismet/KismetSystemLibrary.h"
 
-TFuture<void> RunLambdaOnBackGroundThread(TFunction< void()> InFunction)
-{
-	return Async(EAsyncExecution::Thread, InFunction);
-}
-
 UTCPClientComponent::UTCPClientComponent(const FObjectInitializer &init) : UActorComponent(init)
 {
 	bShouldAutoConnectOnBeginPlay = true;
@@ -25,6 +20,8 @@ UTCPClientComponent::UTCPClientComponent(const FObjectInitializer &init) : UActo
 	ConnectionPort = 27777;
 	ClientSocketName = FString(TEXT("unreal-tcp-client"));
 	ClientSocket = nullptr;
+
+	bCloseSocket = false; // han Initialize
 
 	BufferMaxSize = 2 * 1024 * 1024;	//default roughly 2mb
 }
@@ -76,8 +73,9 @@ void UTCPClientComponent::ConnectToSocketAsClient(const FString& InIP /*= TEXT("
 		uint32 BufferSize = 0;
 		TArray<uint8> ReceiveBuffer;
 		bShouldAttemptConnection = true;
+		bCloseSocket = false; // han - Initialize variable to false when attempting to connect to the server
 
-		while (bShouldAttemptConnection)
+		while (bShouldAttemptConnection && !bCloseSocket)
 		{
 			if (ClientSocket->Connect(*RemoteAdress))
 			{
@@ -95,7 +93,7 @@ void UTCPClientComponent::ConnectToSocketAsClient(const FString& InIP /*= TEXT("
 
 		bShouldReceiveData = true;
 
-		while (bShouldReceiveData)
+		while (bShouldReceiveData && !bCloseSocket)
 		{
 			if (ClientSocket->HasPendingData(BufferSize))
 			{
@@ -149,13 +147,14 @@ void UTCPClientComponent::CloseSocket()
 {
 	if (ClientSocket)
 	{
+		bCloseSocket = true; // han - When the socket is disconnected, change to true to exit the thread.
 		bShouldReceiveData = false;
 		ClientConnectionFinishedFuture.Get();
-
+		
 		ClientSocket->Close();
 		ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(ClientSocket);
 		ClientSocket = nullptr;
-
+	
 		OnDisconnected.Broadcast();
 	}
 }

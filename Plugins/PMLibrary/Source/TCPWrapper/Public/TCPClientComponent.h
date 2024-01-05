@@ -67,7 +67,7 @@ public:
 	* @param InPort the TCP port you wish to connect to
 	*/
 	UFUNCTION(BlueprintCallable, Category = "TCP Functions")
-	void ConnectToSocketAsClient(const FString& InIP = TEXT("127.0.0.1"), const int32 InPort = 3000);
+	void ConnectToSocketAsClient(const FString& InIP = TEXT("127.0.0.1"), const int32 InPort = 27777);
 
 	/**
 	* Close the sending socket. This is usually automatically done on endplay.
@@ -100,4 +100,7 @@ protected:
 	//FTCPSocketReceiver* TCPReceiver;
 	FString SocketDescription;
 	TSharedPtr<FInternetAddr> RemoteAdress;
+
+private:
+	bool bCloseSocket; // han - Variable to prevent program from can't quit due to infinite repetition of threads
 };
