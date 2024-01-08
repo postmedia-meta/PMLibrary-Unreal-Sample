@@ -1,16 +1,16 @@
-// Copyright 1998-2018 Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 
 using UnrealBuildTool;
 
-public class TCPWrapper : ModuleRules
+public class MetaClient : ModuleRules
 {
-	public TCPWrapper(ReadOnlyTargetRules Target) : base(Target)
+	public MetaClient(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
 		// Error fixed _WIN32_WINNT_WIN10_*
 		bEnableUndefinedIdentifierWarnings = false;
-
+		
 		PublicIncludePaths.AddRange(
 			new string[] {
 				// ... add public include paths required here ...

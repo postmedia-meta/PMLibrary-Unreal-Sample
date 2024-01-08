@@ -1,9 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MetaClientManager.h"
-
-#include "PMLibrary/Public/PMLogMacros.h"
+#include "metaclient/MetaClientManager.h"
+#include "metaclient/MetaClientSocket.h"
 
 void UMetaClientManager::InitializeComponent()
 {
@@ -22,16 +21,29 @@ void UMetaClientManager::BeginPlay()
 	// Enable logging
 	receiver.logging(true);
 	receiver.MetaClientManager = this;
+
+	// Han
+	MetaClientSocket.OnConnected.AddDynamic(this, &UMetaClientManager::Connected);
+	MetaClientSocket.OnDisconnected.AddDynamic(this, &UMetaClientManager::Disconnected);
+	MetaClientSocket.OnReceivedBytes.AddDynamic(this, &UMetaClientManager::ReceiveProto);
+	
+	// Han TCPWrapper
+	if (TCPConnectionProperties.bShouldAutoConnectOnBeginPlay)
+	{
+		MetaClientSocket.ConnectToSocketAsClient(TCPConnectionProperties);
+	}
 }
 
 void UMetaClientManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	MetaClientSocket.CloseSocket();
+	
 	Super::EndPlay(EndPlayReason);
 }
 
 void UMetaClientManager::ReceiveProto(const TArray<uint8>& Bytes)
 {
-	PM_LOG("UMetaClientManager ReceiveProto Bytes: %d", Bytes.Num());
+	// PM_LOG("UMetaClientManager ReceiveProto Bytes: %d", Bytes.Num());
 	receiver.receive(Bytes.GetData(), Bytes.Num());
 }
 
@@ -63,7 +75,7 @@ void UMetaClientManager::SendMetaMessage(const FMetaMessage& MetaMessage)
 	if (writer.Verify())
 	{
 		TArray Bytes(writer.buffer().data(), writer.buffer().size());
-		TCPClient->Emit(Bytes);
+		MetaClientSocket.Emit(Bytes, TCPConnectionProperties);
 	}
 }
 
@@ -80,7 +92,7 @@ void UMetaClientManager::SendMetaBinaryMessage(const FMetaBinaryMessage& MetaBin
 	if (writer.Verify())
 	{
 		TArray Bytes(writer.buffer().data(), writer.buffer().size());
-		TCPClient->Emit(Bytes);
+		MetaClientSocket.Emit(Bytes, TCPConnectionProperties);
 	}
 }
 
@@ -93,7 +105,7 @@ void MyReceiver::onReceive(const proto::MetaMessage& value)
 	message.Number = value.body.number.value_or(0);
 	message.Text = FString(UTF8_TO_TCHAR(value.body.text.value_or("").c_str()));
 
-	PM_LOG("MyReceiver onReceive MetaMessage type: %s", *message.Type);
+	// PM_LOG("MyReceiver onReceive MetaMessage type: %s", *message.Type);
 	
 	MetaClientManager->OnMetaMessage.Broadcast(message);
 }
@@ -107,7 +119,7 @@ void MyReceiver::onReceive(const proto::MetaBinaryMessage& value)
 	message.Buffer.Append(&value.body.data.buffer()[0], value.body.data.buffer().size());
 	message.Info = FString(UTF8_TO_TCHAR(value.body.info.value_or("").c_str()));
 	
-	PM_LOG("MyReceiver onReceive MetaBinaryMessage type : %s", *message.Type);
+	// PM_LOG("MyReceiver onReceive MetaBinaryMessage type : %s", *message.Type);
 	
 	MetaClientManager->OnMetaBinaryMessage.Broadcast(message);
 }
@@ -158,7 +170,7 @@ void MyReceiver::onReceive(const proto::LiDARMapperMessage& value)
 	FLiDARMapperMessage message;
 	message.body = frame;
 	
-	PM_LOG("MyReceiver onReceive LiDARMapperMessage type: %s", *message.body.screen);
+	// PM_LOG("MyReceiver onReceive LiDARMapperMessage type: %s", *message.body.screen);
 	
 	MetaClientManager->OnLiDARMapperMessage.Broadcast(message);
 }
@@ -168,4 +180,14 @@ void MyReceiver::onReceiveLog(const std::string& message) const
 	Receiver::onReceiveLog(message);
 	FString msg = FString(UTF8_TO_TCHAR(message.c_str()));
 	//PM_LOG("MyReceiver onReceiveLog message: %s", *msg);
+}
+
+void UMetaClientManager::Connected()
+{
+	OnConnected.Broadcast();
+}
+
+void UMetaClientManager::Disconnected()
+{
+	OnDisconnected.Broadcast();
 }

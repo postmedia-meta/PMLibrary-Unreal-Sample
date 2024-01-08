@@ -10,7 +10,7 @@ public class PMLibrarySample : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "PMLibrary", "TCPWrapper" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "PMLibrary", "MetaClient" });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

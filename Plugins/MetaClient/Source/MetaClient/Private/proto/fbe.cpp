@@ -5,7 +5,7 @@
 // FBE version: 1.14.2.0
 //------------------------------------------------------------------------------
 
-#include "fbe.h"
+#include "proto/fbe.h"
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>

@@ -10,9 +10,7 @@
 #pragma warning(disable:4065) // C4065: switch statement contains 'default' but no 'case' labels
 #endif
 
-#include "proto_protocol.h"
-
-#include "PMLibrary/Public/PMLogMacros.h"
+#include "proto/proto_protocol.h"
 
 namespace FBE {
 

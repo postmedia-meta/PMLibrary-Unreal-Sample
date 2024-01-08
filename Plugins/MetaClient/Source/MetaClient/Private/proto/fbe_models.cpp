@@ -5,7 +5,7 @@
 // FBE version: 1.14.2.0
 //------------------------------------------------------------------------------
 
-#include "fbe_models.h"
+#include "proto/fbe_models.h"
 
 namespace FBE {
 

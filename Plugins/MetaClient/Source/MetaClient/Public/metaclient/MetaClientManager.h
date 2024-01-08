@@ -1,10 +1,12 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "TCPWrapper/proto/proto_protocol.h"
-#include "TCPClientComponent.h"
+#include "MetaClientSocket.h"
+#include "proto/proto_protocol.h"
 #include "MetaClientManager.generated.h"
 
+struct FTCPConnectionProperties;
+class MetaClientSocket;
 
 USTRUCT(BlueprintType)
 struct FMetaMessage
@@ -93,6 +95,7 @@ struct FMetaBinaryMessage
 
 // DECLARE_DYNAMIC_DELEGATE_OneParam			// 1:1
 // DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam	// 1:N
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnEventSignature);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMetaMessage, const FMetaMessage&, Message);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFLiDARMapperMessage, const FLiDARMapperMessage&, Message);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMetaBinaryMessage, const FMetaBinaryMessage&, Message);
@@ -111,11 +114,14 @@ public:
 };
 
 UCLASS(ClassGroup = "Networking", meta = (BlueprintSpawnableComponent))
-class TCPWRAPPER_API UMetaClientManager : public UActorComponent
+class METACLIENT_API UMetaClientManager : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TCP Connection Properties")
+	FTCPConnectionProperties TCPConnectionProperties;
+	
 	UFUNCTION(BlueprintCallable, Category="Meta Client")
 	void ReceiveProto(const TArray<uint8>& Bytes);
 
@@ -128,9 +134,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Meta Client|SendMessage")
 	void SendMetaMessage(const FMetaMessage& MetaMessage);
 
+	// Han - Send Binary Message
 	UFUNCTION(BlueprintCallable, Category="Meta Client|SendMessage")
 	void SendMetaBinaryMessage(const FMetaBinaryMessage& MetaBinaryMessage);
+	
+	UPROPERTY(BlueprintAssignable, Category = "Meta Client Events")
+	FOnEventSignature OnConnected;
 
+	UPROPERTY(BlueprintAssignable, Category = "Meta Client Events")
+	FOnEventSignature OnDisconnected;
+	
 	UPROPERTY(BlueprintAssignable, Category = "Meta Client Events")
 	FOnMetaMessage OnMetaMessage;
 
@@ -140,9 +153,6 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Meta Client Events")
 	FOnFLiDARMapperMessage OnLiDARMapperMessage;
 
-	UPROPERTY(EditAnywhere, BluePrintReadWrite, Category = "Server")
-	UTCPClientComponent *TCPClient;
-
 	virtual void InitializeComponent() override;
 	virtual void UninitializeComponent() override;
 	virtual void BeginPlay() override;
@@ -150,7 +160,15 @@ public:
 
 private:
 	MyReceiver receiver;
+	MetaClientSocket MetaClientSocket;
 
+	// Han
+	UFUNCTION()
+	void Connected();
+	UFUNCTION()
+	void Disconnected();
+	
+	// Han - Byte TArray to std::vector
 	static const std::vector<uint8_t>& TArrayToStdVector(const TArray<uint8>& Buffer);
 };
 

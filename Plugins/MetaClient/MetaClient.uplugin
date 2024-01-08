@@ -2,27 +2,26 @@
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.0",
-	"FriendlyName": "PMLibrary",
-	"Description": "PMLibrary Unreal Plugin",
-	"Category": "Other",
+	"FriendlyName": "MetaClient",
+	"Description": "",
+	"Category": "Networking",
 	"CreatedBy": "PoSTMEDIA",
 	"CreatedByURL": "",
 	"DocsURL": "",
 	"MarketplaceURL": "",
 	"SupportURL": "",
+	"EngineVersion": "5.1.0",
 	"CanContainContent": true,
-	"IsBetaVersion": true,
-	"IsExperimentalVersion": false,
-	"Installed": false,
+	"Installed": true,
 	"Modules": [
 		{
-			"Name": "PMLibrary",
+			"Name": "MetaClient",
 			"Type": "Runtime",
 			"LoadingPhase": "Default",
-			"WhitelistPlatforms": [
+			"PlatformAllowList": [
 				"Win64"
 			],
-			"BlacklistPlatforms": [
+			"PlatformDenyList": [
 				"IOS",
 				"Linux",
 				"Android"

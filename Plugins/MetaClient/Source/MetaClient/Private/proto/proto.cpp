@@ -5,7 +5,7 @@
 // FBE version: 1.14.2.0
 //------------------------------------------------------------------------------
 
-#include "proto.h"
+#include "proto/proto.h"
 
 namespace proto {
 

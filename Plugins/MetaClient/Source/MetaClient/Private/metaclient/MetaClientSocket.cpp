@@ -1,38 +1,19 @@
 
-#include "TCPClientComponent.h"
+#include "metaclient/MetaClientSocket.h"
 
 //#include "IPAddressAsyncResolve.h"  // v5.2 or higher
 #include "IPAddress.h"
 #include "Async/Async.h"
-#include "TCPWrapperUtility.h"
 #include "SocketSubsystem.h"
-#include "Kismet/KismetSystemLibrary.h"
+#include "Networking.h"
 
-UTCPClientComponent::UTCPClientComponent(const FObjectInitializer &init) : UActorComponent(init)
-{
-	bShouldAutoConnectOnBeginPlay = true;
-	bReceiveDataOnGameThread = true;
-	bWantsInitializeComponent = true;
-	bAutoActivate = true;
-	bAutoDisconnectOnSendFailure = true;
-	bAutoReconnectOnSendFailure = true;
-	ConnectionIP = FString(TEXT("127.0.0.1"));
-	ConnectionPort = 27777;
-	ClientSocketName = FString(TEXT("unreal-tcp-client"));
-	ClientSocket = nullptr;
-
-	bCloseSocket = false; // han Initialize
-
-	BufferMaxSize = 2 * 1024 * 1024;	//default roughly 2mb
-}
-
-void UTCPClientComponent::ConnectToSocketAsClient(const FString& InIP /*= TEXT("127.0.0.1")*/, const int32 InPort /*= 3000*/)
+void MetaClientSocket::ConnectToSocketAsClient(const FTCPConnectionProperties& MetaClientSocketOption)
 {
 	//Already connected? attempt reconnect
 	if (IsConnected())
 	{
 		CloseSocket();
-		ConnectToSocketAsClient(InIP, InPort);
+		ConnectToSocketAsClient(MetaClientSocketOption); // han
 	}
 
 	ISocketSubsystem* SocketSubsystem = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM);
@@ -43,30 +24,31 @@ void UTCPClientComponent::ConnectToSocketAsClient(const FString& InIP /*= TEXT("
         return;
     }
 
-	auto ResolveInfo = SocketSubsystem->GetHostByName(TCHAR_TO_ANSI(*InIP));
-	while (!ResolveInfo->IsComplete());
+	const auto ResolveInfo = SocketSubsystem->GetHostByName(TCHAR_TO_ANSI(*MetaClientSocketOption.ConnectionIP));
+	while (!ResolveInfo->IsComplete()) {}
 
-	auto error = ResolveInfo->GetErrorCode();
+	const auto Error = ResolveInfo->GetErrorCode();
 
-	if (error != 0)
+	if (Error != 0)
     {
-        UE_LOG(LogTemp, Error, TEXT("TCPClientComponent: DNS resolve error code %d"), error);
+        UE_LOG(LogTemp, Error, TEXT("TCPClientComponent: DNS resolve error code %d"), Error);
         return;
     }
 
-	RemoteAdress = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
+	RemoteAddress = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
 
-	RemoteAdress->SetRawIp(ResolveInfo->GetResolvedAddress().GetRawIp()); // todo: somewhat wasteful, we could probably use the same address object?
-	RemoteAdress->SetPort(InPort);
+	RemoteAddress->SetRawIp(ResolveInfo->GetResolvedAddress().GetRawIp()); // todo: somewhat wasteful, we could probably use the same address object?
+	RemoteAddress->SetPort(MetaClientSocketOption.ConnectionPort);
 
-	ClientSocket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, ClientSocketName, false);
-
+	ClientSocket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, MetaClientSocketOption.ClientSocketName, false);
+	
 	//Set Send Buffer Size
+	int32 BufferMaxSize = MetaClientSocketOption.BufferMaxSize; // han
 	ClientSocket->SetSendBufferSize(BufferMaxSize, BufferMaxSize);
 	ClientSocket->SetReceiveBufferSize(BufferMaxSize, BufferMaxSize);
 
 	//Listen for data on our end
-	ClientConnectionFinishedFuture = FTCPWrapperUtility::RunLambdaOnBackGroundThread([&]()
+	ClientConnectionFinishedFuture = RunLambdaOnBackGroundThread([&]()
 	{
 		double LastConnectionCheck = FPlatformTime::Seconds();
 
@@ -77,9 +59,9 @@ void UTCPClientComponent::ConnectToSocketAsClient(const FString& InIP /*= TEXT("
 
 		while (bShouldAttemptConnection && !bCloseSocket)
 		{
-			if (ClientSocket->Connect(*RemoteAdress))
+			if (ClientSocket->Connect(*RemoteAddress))
 			{
-				FTCPWrapperUtility::RunLambdaOnGameThread([&]()
+				RunLambdaOnGameThread([&]()
 				{
 					OnConnected.Broadcast();
 				});
@@ -102,12 +84,12 @@ void UTCPClientComponent::ConnectToSocketAsClient(const FString& InIP /*= TEXT("
 				int32 Read = 0;
 				ClientSocket->Recv(ReceiveBuffer.GetData(), ReceiveBuffer.Num(), Read);
 
-				if (bReceiveDataOnGameThread)
+				if (MetaClientSocketOption.bReceiveDataOnGameThread) // han
 				{
 					//Copy buffer so it's still valid on game thread
 					TArray<uint8> ReceiveBufferGT;
 					ReceiveBufferGT.Append(ReceiveBuffer);
-
+				
 					//Pass the reference to be used on game thread
 					AsyncTask(ENamedThreads::GameThread, [&, ReceiveBufferGT]()
 					{
@@ -121,29 +103,11 @@ void UTCPClientComponent::ConnectToSocketAsClient(const FString& InIP /*= TEXT("
 			}
 			//sleep until there is data or 10 ticks (0.1micro seconds
 			ClientSocket->Wait(ESocketWaitConditions::WaitForReadOrWrite, FTimespan(10));
-
-			//Check every second if we're still connected
-			//NB: this doesn't really work atm, disconnects are not captured on receive pipe
-			//detectable on send failure though
-			/*double Now = FPlatformTime::Seconds();
-			if (Now > (LastConnectionCheck + 1.0)) 
-			{
-				LastConnectionCheck = Now;
-				if (!IsConnected())
-				{
-					bShouldReceiveData = false;
-					FTCPWrapperUtility::RunLambdaOnGameThread([&]() 
-					{
-						OnDisconnected.Broadcast();
-					});
-					
-				}
-			}*/
 		}
 	});
 }
 
-void UTCPClientComponent::CloseSocket()
+void MetaClientSocket::CloseSocket()
 {
 	if (ClientSocket)
 	{
@@ -159,7 +123,7 @@ void UTCPClientComponent::CloseSocket()
 	}
 }
 
-bool UTCPClientComponent::Emit(const TArray<uint8>& Bytes)
+bool MetaClientSocket::Emit(const TArray<uint8>& Bytes, const FTCPConnectionProperties& MetaClientSocketOption)
 {
 	if (IsConnected())
 	{
@@ -172,16 +136,16 @@ bool UTCPClientComponent::Emit(const TArray<uint8>& Bytes)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Sending Failure detected"));
 
-			if (bAutoDisconnectOnSendFailure)
+			if (MetaClientSocketOption.bAutoDisconnectOnSendFailure)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("disconnecting socket."));
 				CloseSocket();
 			}
-
-			if (bAutoReconnectOnSendFailure)
+			
+			if (MetaClientSocketOption.bAutoReconnectOnSendFailure)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("reconnecting..."));
-				ConnectToSocketAsClient(ConnectionIP, ConnectionPort);
+				ConnectToSocketAsClient(MetaClientSocketOption);
 			}
 		}
 		return bDidSend;
@@ -189,34 +153,17 @@ bool UTCPClientComponent::Emit(const TArray<uint8>& Bytes)
 	return false;
 }
 
-bool UTCPClientComponent::IsConnected()
+bool MetaClientSocket::IsConnected()
 {
 	return (ClientSocket && (ClientSocket->GetConnectionState() == ESocketConnectionState::SCS_Connected));
 }
 
-void UTCPClientComponent::InitializeComponent()
+static TFuture<void> RunLambdaOnBackGroundThread(TFunction< void()> InFunction)
 {
-	Super::InitializeComponent();
+	return Async(EAsyncExecution::Thread, InFunction);
 }
 
-void UTCPClientComponent::UninitializeComponent()
+static TFuture<void> RunLambdaOnGameThread(TFunction< void()> InFunction)
 {
-	Super::UninitializeComponent();
-}
-
-void UTCPClientComponent::BeginPlay()
-{
-	Super::BeginPlay();
-
-	if (bShouldAutoConnectOnBeginPlay)
-	{
-		ConnectToSocketAsClient(ConnectionIP, ConnectionPort);
-	}
-}
-
-void UTCPClientComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	CloseSocket();
-
-	Super::EndPlay(EndPlayReason);
-}
+	return Async(EAsyncExecution::TaskGraphMainThread, InFunction);
+}	

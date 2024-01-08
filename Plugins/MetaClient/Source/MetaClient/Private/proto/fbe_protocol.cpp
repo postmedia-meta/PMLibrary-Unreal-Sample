@@ -5,9 +5,7 @@
 // FBE version: 1.14.2.0
 //------------------------------------------------------------------------------
 
-#include "fbe_protocol.h"
-
-#include "PMLibrary/Public/PMLogMacros.h"
+#include "proto/fbe_protocol.h"
 
 namespace FBE {
 
@@ -49,8 +47,8 @@ void Receiver::receive(const void* data, size_t size)
     // While receive buffer is available to handle...
     while (offset2 < size2)
     {
-        // Han test error
-        if (size1 > 0){PM_SCREEN_ERROR("Size1 : %llu // Size2 : %llu // offset0 : %llu // offset1 : %llu// offset2 : %llu", size1, size2, offset0, offset1, offset2);}
+        // if (size1 > 0){GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::White, FString::Printf(TEXT("Size1 : %llu // Size2 : %llu // offset0 : %llu // offset1 : %llu// offset2 : %llu", size1, size2, offset0, offset1, offset2)));} // Han error log
+        
         const uint8_t* message_buffer = nullptr;
         size_t message_size = 0;
 
