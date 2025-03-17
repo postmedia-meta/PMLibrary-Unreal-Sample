@@ -5,7 +5,7 @@
 #include "proto/proto_protocol.h"
 #include "MetaClientManager.generated.h"
 
-struct FTCPConnectionProperties;
+struct FMetaClientSocketOption;
 class MetaClientSocket;
 
 USTRUCT(BlueprintType)
@@ -120,7 +120,7 @@ class METACLIENT_API UMetaClientManager : public UActorComponent
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TCP Connection Properties")
-	FTCPConnectionProperties TCPConnectionProperties;
+	FMetaClientSocketOption ClientSocketOption;
 	
 	UFUNCTION(BlueprintCallable, Category="Meta Client")
 	void ReceiveProto(const TArray<uint8>& Bytes);
@@ -137,6 +137,14 @@ public:
 	// Han - Send Binary Message
 	UFUNCTION(BlueprintCallable, Category="Meta Client|SendMessage")
 	void SendMetaBinaryMessage(const FMetaBinaryMessage& MetaBinaryMessage);
+
+	// Han - This function connects a socket through the entered IP and port.
+	UFUNCTION(BlueprintCallable, Category="Meta Client|SendMessage")
+	void ConnectToSocketAsClient(const FString& ConnectionIP, const int32& ConnectionPort);
+
+	// Han - Closes the socket's connection.
+	UFUNCTION(BlueprintCallable, Category="Meta Client|SendMessage")
+	void CloseSocket();
 	
 	UPROPERTY(BlueprintAssignable, Category = "Meta Client Events")
 	FOnEventSignature OnConnected;
@@ -160,28 +168,14 @@ public:
 
 private:
 	MyReceiver receiver;
-	MetaClientSocket MetaClientSocket;
+	MetaClientSocket ClientSocket;
 
-	// Han
+	// Han - Bound when connected and disconnected
 	UFUNCTION()
 	void Connected();
 	UFUNCTION()
 	void Disconnected();
 	
 	// Han - Byte TArray to std::vector
-	static const std::vector<uint8_t>& TArrayToStdVector(const TArray<uint8>& Buffer);
+	void TArrayToStdVector(std::vector<uint8_t>& Vector, const TArray<uint8>& Buffer);
 };
-
-inline const std::vector<uint8_t>& UMetaClientManager::TArrayToStdVector(const TArray<uint8>& Buffer)
-{
-	static std::vector<uint8_t> Vector;
-	Vector.clear();
-	Vector.resize(Buffer.Num());
-	
-	for(int i = 0; i < Buffer.Num(); i++)
-	{
-		Vector[i] = Buffer[i];
-	}
-	
-	return Vector;
-}

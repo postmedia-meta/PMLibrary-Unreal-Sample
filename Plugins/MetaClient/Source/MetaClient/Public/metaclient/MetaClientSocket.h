@@ -5,7 +5,7 @@
 #include "MetaClientSocket.generated.h"
 
 USTRUCT(BlueprintType)
-struct FTCPConnectionProperties
+struct FMetaClientSocketOption
 {
 	GENERATED_BODY()
 
@@ -22,6 +22,9 @@ struct FTCPConnectionProperties
 	/** in bytes */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TCP Connection Properties")
 	int32 BufferMaxSize = 2 * 1024 * 1024;	//default roughly 2mb
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TCP Connection Properties")
+	float ReconnectAttemptRate = 3.0f;
 
 	/** If true will auto-connect on begin play to IP/port specified as a client. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TCP Connection Properties")
@@ -50,15 +53,12 @@ public:
 	//Async events
 
 	/** On message received on the receiving socket. */
-	UPROPERTY(BlueprintAssignable, Category = "TCP Events")
 	FTCPMessageSignature OnReceivedBytes;
 
 	/** Callback when we've connected to end point*/
-	UPROPERTY(BlueprintAssignable, Category = "TCP Events")
 	FTCPEventSignature OnConnected;
 
 	/** Callback when we've disconnected from end point only captured on send failure */
-	UPROPERTY(BlueprintAssignable, Category = "TCP Events")
 	FTCPEventSignature OnDisconnected;
 	
 	/**
@@ -66,20 +66,14 @@ public:
 	* Emit function will then work as long the network is reachable. By default
 	* it will attempt this setup for this socket on beginplay.
 	**/
-
-	UFUNCTION(BlueprintCallable, Category = "TCP Functions")
-	void ConnectToSocketAsClient(const FTCPConnectionProperties& MetaClientSocketOption);
+	void ConnectToSocketAsClient(const FMetaClientSocketOption& ClientSocketOption);
 
 	// Close the sending socket. This is usually automatically done on endplay.
-
-	UFUNCTION(BlueprintCallable, Category = "TCP Functions")
 	void CloseSocket();
 	
 	// Emit specified bytes to the TCP channel. 
-	UFUNCTION(BlueprintCallable, Category = "TCP Functions")
-	bool Emit(const TArray<uint8>& Bytes, const FTCPConnectionProperties& MetaClientSocketOption);
+	bool Emit(const TArray<uint8>& Bytes, const FMetaClientSocketOption& MetaClientSocketOption);
 	
-	UFUNCTION(BlueprintPure, Category = "TCP Functions")
 	bool IsConnected();
 	
 protected:

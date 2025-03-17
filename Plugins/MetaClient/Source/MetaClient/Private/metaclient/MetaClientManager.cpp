@@ -1,8 +1,9 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "metaclient/MetaClientManager.h"
-#include "metaclient/MetaClientSocket.h"
+#include "Metaclient/MetaClientManager.h"
+
+#include "Metaclient/MetaClientSocket.h"
 
 void UMetaClientManager::InitializeComponent()
 {
@@ -22,21 +23,21 @@ void UMetaClientManager::BeginPlay()
 	receiver.logging(true);
 	receiver.MetaClientManager = this;
 
-	// Han
-	MetaClientSocket.OnConnected.AddDynamic(this, &UMetaClientManager::Connected);
-	MetaClientSocket.OnDisconnected.AddDynamic(this, &UMetaClientManager::Disconnected);
-	MetaClientSocket.OnReceivedBytes.AddDynamic(this, &UMetaClientManager::ReceiveProto);
+	// han - TCP Event Bind
+	ClientSocket.OnConnected.AddDynamic(this, &UMetaClientManager::Connected);
+	ClientSocket.OnDisconnected.AddDynamic(this, &UMetaClientManager::Disconnected);
+	ClientSocket.OnReceivedBytes.AddDynamic(this, &UMetaClientManager::ReceiveProto);
 	
-	// Han TCPWrapper
-	if (TCPConnectionProperties.bShouldAutoConnectOnBeginPlay)
+	// han - Auto Connection 
+	if (ClientSocketOption.bShouldAutoConnectOnBeginPlay)
 	{
-		MetaClientSocket.ConnectToSocketAsClient(TCPConnectionProperties);
+		ClientSocket.ConnectToSocketAsClient(ClientSocketOption);
 	}
 }
 
 void UMetaClientManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	MetaClientSocket.CloseSocket();
+	ClientSocket.CloseSocket();
 	
 	Super::EndPlay(EndPlayReason);
 }
@@ -74,16 +75,19 @@ void UMetaClientManager::SendMetaMessage(const FMetaMessage& MetaMessage)
 	writer.serialize(message);
 	if (writer.Verify())
 	{
-		TArray Bytes(writer.buffer().data(), writer.buffer().size());
-		MetaClientSocket.Emit(Bytes, TCPConnectionProperties);
+		const TArray Bytes(writer.buffer().data(), writer.buffer().size());
+		ClientSocket.Emit(Bytes, ClientSocketOption);
 	}
 }
 
 void UMetaClientManager::SendMetaBinaryMessage(const FMetaBinaryMessage& MetaBinaryMessage)
 {
+	std::vector<uint8_t> data;
+	TArrayToStdVector(data, MetaBinaryMessage.Buffer);
+	
 	proto::MetaBinaryMessage message;
 	message.body.type = TCHAR_TO_UTF8(*MetaBinaryMessage.Type);
-	message.body.data = TArrayToStdVector(MetaBinaryMessage.Buffer);
+	message.body.data = data;
 	message.body.info = TCHAR_TO_UTF8(*MetaBinaryMessage.Info);
 
 	// Serialize the account to the FBE stream
@@ -92,8 +96,20 @@ void UMetaClientManager::SendMetaBinaryMessage(const FMetaBinaryMessage& MetaBin
 	if (writer.Verify())
 	{
 		TArray Bytes(writer.buffer().data(), writer.buffer().size());
-		MetaClientSocket.Emit(Bytes, TCPConnectionProperties);
+		ClientSocket.Emit(Bytes, ClientSocketOption);
 	}
+}
+
+void UMetaClientManager::ConnectToSocketAsClient(const FString& ConnectionIP, const int32& ConnectionPort)
+{
+	ClientSocketOption.ConnectionIP = ConnectionIP;
+	ClientSocketOption.ConnectionPort = ConnectionPort;
+	ClientSocket.ConnectToSocketAsClient(ClientSocketOption);
+}
+
+void UMetaClientManager::CloseSocket()
+{
+	ClientSocket.CloseSocket();
 }
 
 void MyReceiver::onReceive(const proto::MetaMessage& value)
@@ -190,4 +206,14 @@ void UMetaClientManager::Connected()
 void UMetaClientManager::Disconnected()
 {
 	OnDisconnected.Broadcast();
+}
+
+void UMetaClientManager::TArrayToStdVector(std::vector<uint8_t>& Vector, const TArray<uint8>& Buffer)
+{
+	Vector.resize(Buffer.Num());
+	
+	for(int i = 0; i < Buffer.Num(); ++i)
+	{
+		Vector[i] = Buffer[i];
+	}
 }

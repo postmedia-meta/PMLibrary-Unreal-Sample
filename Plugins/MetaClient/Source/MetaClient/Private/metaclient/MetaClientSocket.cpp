@@ -1,21 +1,23 @@
 
-#include "metaclient/MetaClientSocket.h"
+#include "Metaclient/MetaClientSocket.h"
 
-//#include "IPAddressAsyncResolve.h"  // v5.2 or higher
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 2
+	#include "IPAddressAsyncResolve.h"
+#endif
+
 #include "IPAddress.h"
 #include "Async/Async.h"
 #include "SocketSubsystem.h"
 #include "Networking.h"
 
-void MetaClientSocket::ConnectToSocketAsClient(const FTCPConnectionProperties& MetaClientSocketOption)
+void MetaClientSocket::ConnectToSocketAsClient(const FMetaClientSocketOption& ClientSocketOption) // han - change parameter
 {
 	//Already connected? attempt reconnect
 	if (IsConnected())
 	{
 		CloseSocket();
-		ConnectToSocketAsClient(MetaClientSocketOption); // han
 	}
-
+	
 	ISocketSubsystem* SocketSubsystem = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM);
 
 	if (SocketSubsystem == nullptr)
@@ -24,7 +26,7 @@ void MetaClientSocket::ConnectToSocketAsClient(const FTCPConnectionProperties& M
         return;
     }
 
-	const auto ResolveInfo = SocketSubsystem->GetHostByName(TCHAR_TO_ANSI(*MetaClientSocketOption.ConnectionIP));
+	const auto ResolveInfo = SocketSubsystem->GetHostByName(TCHAR_TO_ANSI(*ClientSocketOption.ConnectionIP));
 	while (!ResolveInfo->IsComplete()) {}
 
 	const auto Error = ResolveInfo->GetErrorCode();
@@ -34,24 +36,22 @@ void MetaClientSocket::ConnectToSocketAsClient(const FTCPConnectionProperties& M
         UE_LOG(LogTemp, Error, TEXT("TCPClientComponent: DNS resolve error code %d"), Error);
         return;
     }
-
+	
 	RemoteAddress = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
 
 	RemoteAddress->SetRawIp(ResolveInfo->GetResolvedAddress().GetRawIp()); // todo: somewhat wasteful, we could probably use the same address object?
-	RemoteAddress->SetPort(MetaClientSocketOption.ConnectionPort);
+	RemoteAddress->SetPort(ClientSocketOption.ConnectionPort);
 
-	ClientSocket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, MetaClientSocketOption.ClientSocketName, false);
+	ClientSocket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, ClientSocketOption.ClientSocketName, false);
 	
 	//Set Send Buffer Size
-	int32 BufferMaxSize = MetaClientSocketOption.BufferMaxSize; // han
+	int32 BufferMaxSize = ClientSocketOption.BufferMaxSize; // han - constant to variable
 	ClientSocket->SetSendBufferSize(BufferMaxSize, BufferMaxSize);
 	ClientSocket->SetReceiveBufferSize(BufferMaxSize, BufferMaxSize);
 
 	//Listen for data on our end
 	ClientConnectionFinishedFuture = RunLambdaOnBackGroundThread([&]()
 	{
-		double LastConnectionCheck = FPlatformTime::Seconds();
-
 		uint32 BufferSize = 0;
 		TArray<uint8> ReceiveBuffer;
 		bShouldAttemptConnection = true;
@@ -70,7 +70,7 @@ void MetaClientSocket::ConnectToSocketAsClient(const FTCPConnectionProperties& M
 			}
 		
 			//reconnect attempt every 3 sec
-			FPlatformProcess::Sleep(3.f);
+			FPlatformProcess::Sleep(ClientSocketOption.ReconnectAttemptRate);
 		}
 
 		bShouldReceiveData = true;
@@ -84,7 +84,7 @@ void MetaClientSocket::ConnectToSocketAsClient(const FTCPConnectionProperties& M
 				int32 Read = 0;
 				ClientSocket->Recv(ReceiveBuffer.GetData(), ReceiveBuffer.Num(), Read);
 
-				if (MetaClientSocketOption.bReceiveDataOnGameThread) // han
+				if (ClientSocketOption.bReceiveDataOnGameThread) // han - change parameter
 				{
 					//Copy buffer so it's still valid on game thread
 					TArray<uint8> ReceiveBufferGT;
@@ -101,7 +101,7 @@ void MetaClientSocket::ConnectToSocketAsClient(const FTCPConnectionProperties& M
 					OnReceivedBytes.Broadcast(ReceiveBuffer);
 				}
 			}
-			//sleep until there is data or 10 ticks (0.1micro seconds
+			//sleep until there is data or 10 ticks (0.1micro seconds)
 			ClientSocket->Wait(ESocketWaitConditions::WaitForReadOrWrite, FTimespan(10));
 		}
 	});
@@ -123,12 +123,12 @@ void MetaClientSocket::CloseSocket()
 	}
 }
 
-bool MetaClientSocket::Emit(const TArray<uint8>& Bytes, const FTCPConnectionProperties& MetaClientSocketOption)
+bool MetaClientSocket::Emit(const TArray<uint8>& Bytes, const FMetaClientSocketOption& MetaClientSocketOption)
 {
 	if (IsConnected())
 	{
 		int32 BytesSent = 0;
-		bool bDidSend = ClientSocket->Send(Bytes.GetData(), Bytes.Num(), BytesSent);
+		const bool bDidSend = ClientSocket->Send(Bytes.GetData(), Bytes.Num(), BytesSent);
 		
 
 		//If we're supposedly connected but failed to send
