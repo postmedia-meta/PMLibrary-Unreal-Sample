@@ -65,7 +65,7 @@ public:
 	int32 FrameOut = 3;
 	
 	// State change event
-	UPROPERTY(BlueprintAssignable, Category="Multi Media Events")
+	UPROPERTY(BlueprintAssignable, Category="Multi Media|Event")
 	FOnChangedMultiMediaState OnChangedMultiMediaState;
 	
 private:

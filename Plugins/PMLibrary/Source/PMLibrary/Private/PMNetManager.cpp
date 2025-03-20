@@ -88,7 +88,7 @@ void UPMNetManager::Request(const FString& URL, const EHttpMethod Method, const 
 			if (bPrintToLog)
 			{
 				PM_LINE();
-				PM_ERROR("[Response][Error] %s :: %s\n%s", *ToString(Method), *URL, *Status);
+				PM_ERROR("[Response][Error] %s :: %s\n%s", *ToString(Method), *URL, Status);
 				PM_LINE();	
 			}
 			if (OnError != nullptr) OnError(Status);		
