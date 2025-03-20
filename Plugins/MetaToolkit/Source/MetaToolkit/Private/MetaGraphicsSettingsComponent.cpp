@@ -32,7 +32,7 @@ void UMetaGraphicsSettingsComponent::BeginPlay()
 		GraphicsSettingsWidget = CreateWidget<UMetaGraphicsSettingsWidget>(PlayerController, GraphicsSettingWidgetClass);
 		if (GraphicsSettingsWidget)
 		{
-			GraphicsSettingsWidget->AddToViewport();
+			GraphicsSettingsWidget->AddToViewport(ZOrder);
 			HideGraphicsSettingsUI();
 		}
 	}

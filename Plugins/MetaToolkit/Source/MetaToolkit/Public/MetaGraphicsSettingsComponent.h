@@ -14,19 +14,22 @@ class METATOOLKIT_API UMetaGraphicsSettingsComponent : public UActorComponent
 	UMetaGraphicsSettingsComponent();
 	
 public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="UI")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Meta Graphics Settings")
 	UMetaGraphicsSettingsWidget* GraphicsSettingsWidget = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="UI")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Meta Graphics Settings")
 	TSubclassOf<UUserWidget> GraphicsSettingWidgetClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Meta Graphics Settings")
+	int32 ZOrder = 0;
 
 protected:
 	virtual void BeginPlay() override;
 
 public:
-	UFUNCTION(BlueprintCallable, Category="Meta Screen Setting")
+	UFUNCTION(BlueprintCallable, Category="Meta Graphics Settings")
 	void ShowGraphicsSettingsUI();
 	
-	UFUNCTION(BlueprintCallable, Category="Meta Screen Setting")
+	UFUNCTION(BlueprintCallable, Category="Meta Graphics Settings")
 	void HideGraphicsSettingsUI();
 };

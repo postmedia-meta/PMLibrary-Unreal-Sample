@@ -37,6 +37,9 @@ struct FGraphicsSettings
 
 	UPROPERTY(VisibleAnywhere)
 	uint8 ReflectionQuality = 3;
+	
+	UPROPERTY(VisibleAnywhere)
+	bool bEnabledScreenMessage = true;
 };
 
 UCLASS()

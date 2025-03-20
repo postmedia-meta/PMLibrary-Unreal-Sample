@@ -3,23 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "MetaWidget.h"
 #include "MetaGraphicsSettingsWidget.generated.h"
 
 class UArrowSwitchWidget;
 class UCanvasPanelSlot;
-class UImage;
 class UTextBlock;
 class UButton;
 class UComboBoxString;
 class UEditableText;
-class UScaleBox;
-class USizeBox;
-class UCanvasPanel;
 class UMetaToolkitSaveGame;
 
 UCLASS()
-class METATOOLKIT_API UMetaGraphicsSettingsWidget : public UUserWidget
+class METATOOLKIT_API UMetaGraphicsSettingsWidget : public UMetaWidget
 {
 	GENERATED_BODY()
 
@@ -63,54 +59,57 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="GraphicSettingWidget")
 	UButton* CloseButton;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="GraphicSettingWidget")
+	UButton* ScreenMessageButton;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="GraphicSettingWidget")
+	UTextBlock* ScreenMessageStateTextBlock;
+
 private:
-	FIntPoint ViewportSize = FIntPoint(0, 0);
-
-	UPROPERTY()
-	APlayerController* PlayerController;
-
+	TMap<uint8, EWindowMode::Type> WindowModeMap = {
+		{0, EWindowMode::Type::Fullscreen},
+		{1, EWindowMode::Type::WindowedFullscreen},
+		{2, EWindowMode::Type::Windowed}
+	};
+	
 	UPROPERTY()
 	UGameUserSettings* GameUserSettings;
 
 	UPROPERTY(VisibleAnywhere)
 	UMetaToolkitSaveGame* MetaToolkitSaveGame;
 
-	TMap<uint8, EWindowMode::Type> WindowModeMap = {
-		{0, EWindowMode::Type::Fullscreen},
-		{1, EWindowMode::Type::WindowedFullscreen},
-		{2, EWindowMode::Type::Windowed}
-	};
-
-
 protected:
 	virtual void NativeConstruct() override;
-	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+	virtual void MetaNativeOnViewportResized(FViewport* Viewport, unsigned int I) override;
 
 public:
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="GraphicSettingWidget")
 	void InitVariable();
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="GraphicSettingWidget")
 	void ChangeResolutionX(const FText& Text, ETextCommit::Type CommitMethod);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="GraphicSettingWidget")
 	void ChangeResolutionY(const FText& Text, ETextCommit::Type CommitMethod);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="GraphicSettingWidget")
 	void ChangeOverallQuality(const int32 Quality);
-
-	UFUNCTION(BlueprintCallable)
-	void ShowWidget();
-
-	UFUNCTION(BlueprintCallable)
-	void HideWidget();
 	
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="GraphicSettingWidget")
 	void ApplySettings();
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="GraphicSettingWidget")
 	void ApplyResolutionSettings();
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="GraphicSettingWidget")
 	void ApplyGraphicsSettings();
+
+	UFUNCTION(BlueprintCallable, Category="GraphicSettingWidget")
+	void ShowWidget();
+
+	UFUNCTION(BlueprintCallable, Category="GraphicSettingWidget")
+	void HideWidget();
+
+	UFUNCTION(BlueprintCallable, Category="GraphicSettingWidget")
+	void ToggleScreenMessage();
 };

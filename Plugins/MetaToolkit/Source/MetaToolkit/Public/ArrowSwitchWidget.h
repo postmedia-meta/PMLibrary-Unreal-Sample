@@ -51,12 +51,12 @@ private:
 	void ClickNextButton();
 
 public:
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="ArrowSwitchWidget")
 	void SetCurrentIndex(const int32 Index);
 	
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="ArrowSwitchWidget")
 	int32 GetCurrentIndex() { return CurrentIndex; }
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="ArrowSwitchWidget")
 	FString GetCurrentStringFromTextBlock() { return TextBlock->GetText().ToString(); }
 };

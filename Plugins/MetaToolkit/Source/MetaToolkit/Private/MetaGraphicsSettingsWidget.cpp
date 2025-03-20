@@ -43,25 +43,27 @@ void UMetaGraphicsSettingsWidget::NativeConstruct()
 	ResolutionY->OnTextCommitted.AddDynamic(this, &UMetaGraphicsSettingsWidget::ChangeResolutionY);
 	ApplyButton->OnClicked.AddDynamic(this, &UMetaGraphicsSettingsWidget::ApplySettings);
 	CloseButton->OnClicked.AddDynamic(this, &UMetaGraphicsSettingsWidget::HideWidget);
+	ScreenMessageButton->OnClicked.AddDynamic(this, &UMetaGraphicsSettingsWidget::ToggleScreenMessage);
 	OverallQuality->OnChangedIndex.AddDynamic(this, &UMetaGraphicsSettingsWidget::ChangeOverallQuality);
 }
 
-void UMetaGraphicsSettingsWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+void UMetaGraphicsSettingsWidget::MetaNativeOnViewportResized(FViewport* Viewport, unsigned int I)
 {
-	Super::NativeTick(MyGeometry, InDeltaTime);
-
+	Super::MetaNativeOnViewportResized(Viewport, I);
+	
 	if (PlayerController != nullptr)
 	{
-		PlayerController->GetViewportSize(ViewportSize.X, ViewportSize.Y);
 		ViewportSizeTextBlock->SetText(FText::FromString(FString::Printf(TEXT("%dx%d"), ViewportSize.X, ViewportSize.Y)));	
 	}
-
-	FVector2D MousePosition;
-	PlayerController->GetMousePosition(MousePosition.X, MousePosition.Y);
 }
 
 void UMetaGraphicsSettingsWidget::InitVariable()
 {
+	// Screen Message
+	GAreScreenMessagesEnabled = MetaToolkitSaveGame->GraphicsSettings.bEnabledScreenMessage;
+	ScreenMessageStateTextBlock->SetText(GAreScreenMessagesEnabled ? FText::FromString(TEXT("Show")) : FText::FromString(TEXT("Hide")));
+	
+	// Quality setting
 	OverallQuality->SetCurrentIndex(MetaToolkitSaveGame->GraphicsSettings.OverallQuality);
 	ViewDistanceQuality->SetCurrentIndex(MetaToolkitSaveGame->GraphicsSettings.ViewDistanceQuality);
 	GlobalIlluminationQuality->SetCurrentIndex(MetaToolkitSaveGame->GraphicsSettings.GlobalIlluminationQuality);
@@ -69,12 +71,12 @@ void UMetaGraphicsSettingsWidget::InitVariable()
 	PostProcessingQuality->SetCurrentIndex(MetaToolkitSaveGame->GraphicsSettings.PostProcessingQuality);
 	AntiAliasingQuality->SetCurrentIndex(MetaToolkitSaveGame->GraphicsSettings.AntiAliasingQuality);
 	ReflectionQuality->SetCurrentIndex(MetaToolkitSaveGame->GraphicsSettings.ReflectionQuality);
-	
-	PlayerController->GetViewportSize(ViewportSize.X, ViewportSize.Y);
-	
+
+	// Get save viewport size
 	const FIntPoint Resolution = MetaToolkitSaveGame->GraphicsSettings.Resolution;
 	const EWindowMode::Type WindowMode = static_cast<EWindowMode::Type>(MetaToolkitSaveGame->GraphicsSettings.WindowMode);
-	
+
+	// Viewport setting
 	ResolutionX->SetText(FText::FromString(FString::FromInt(Resolution.X)));
 	ResolutionY->SetText(FText::FromString(FString::FromInt(Resolution.Y)));
 	switch (WindowMode)
@@ -117,20 +119,27 @@ void UMetaGraphicsSettingsWidget::ChangeOverallQuality(const int32 Quality)
 void UMetaGraphicsSettingsWidget::ShowWidget()
 {
 	InitVariable();
-	PlayerController->SetInputMode(FInputModeUIOnly());
-	PlayerController->SetShowMouseCursor(true);
-	SetVisibility(ESlateVisibility::Visible);
+	PlayerController->SetInputMode(FInputModeGameAndUI());
+	SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 }
 
 void UMetaGraphicsSettingsWidget::HideWidget()
 {
 	PlayerController->SetInputMode(FInputModeGameOnly());
-	PlayerController->SetShowMouseCursor(false);
 	SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void UMetaGraphicsSettingsWidget::ToggleScreenMessage()
+{
+	GAreScreenMessagesEnabled = !GAreScreenMessagesEnabled;
+	ScreenMessageStateTextBlock->SetText(GAreScreenMessagesEnabled ? FText::FromString(TEXT("Show")) : FText::FromString(TEXT("Hide")));
 }
 
 void UMetaGraphicsSettingsWidget::ApplySettings()
 {
+	MetaToolkitSaveGame->GraphicsSettings.bEnabledScreenMessage = GAreScreenMessagesEnabled;
+	MetaToolkitSaveGame->SaveGame();
+	
 	ApplyResolutionSettings();
 	ApplyGraphicsSettings();
 }
