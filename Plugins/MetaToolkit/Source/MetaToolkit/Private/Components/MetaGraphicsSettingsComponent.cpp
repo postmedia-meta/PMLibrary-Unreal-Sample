@@ -1,15 +1,15 @@
 ﻿
 
-#include "MetaGraphicsSettingsComponent.h"
+#include "Components//MetaGraphicsSettingsComponent.h"
 
-#include "MetaGraphicsSettingsWidget.h"
+#include "Widgets/MTKGraphicsSettingsWidget.h"
 #include "Blueprint/UserWidget.h"
 
 UMetaGraphicsSettingsComponent::UMetaGraphicsSettingsComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 
-	static ConstructorHelpers::FClassFinder<UUserWidget> GraphicsSettingWidgetClassFinder(TEXT("/Script/UMGEditor.WidgetBlueprint'/MetaToolkit/UIs/WBP_MetaGraphicsSettingWidget.WBP_MetaGraphicsSettingWidget_C'"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> GraphicsSettingWidgetClassFinder(TEXT("/Script/UMGEditor.WidgetBlueprint'/MetaToolkit/UIs/WBP_MTKGraphicsSettingWidget.WBP_MTKGraphicsSettingWidget_C'"));
 	if (GraphicsSettingWidgetClassFinder.Succeeded())
 	{
 		GraphicsSettingWidgetClass = GraphicsSettingWidgetClassFinder.Class;
@@ -29,7 +29,7 @@ void UMetaGraphicsSettingsComponent::BeginPlay()
 
 	if (GraphicsSettingWidgetClass)
 	{
-		GraphicsSettingsWidget = CreateWidget<UMetaGraphicsSettingsWidget>(PlayerController, GraphicsSettingWidgetClass);
+		GraphicsSettingsWidget = CreateWidget<UMTKGraphicsSettingsWidget>(PlayerController, GraphicsSettingWidgetClass);
 		if (GraphicsSettingsWidget)
 		{
 			GraphicsSettingsWidget->AddToViewport(ZOrder);

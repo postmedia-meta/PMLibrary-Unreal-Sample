@@ -3,19 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MetaWidget.h"
-#include "MetaGraphicsSettingsWidget.generated.h"
+#include "MTKWidget.h"
+#include "MTKGraphicsSettingsWidget.generated.h"
 
-class UArrowSwitchWidget;
+class UMTKArrowSwitchWidget;
 class UCanvasPanelSlot;
 class UTextBlock;
 class UButton;
 class UComboBoxString;
 class UEditableText;
-class UMetaToolkitSaveGame;
+class UMTKSaveGame;
 
 UCLASS(meta=(DisableNativeTick))
-class METATOOLKIT_API UMetaGraphicsSettingsWidget : public UMetaWidget
+class METATOOLKIT_API UMTKGraphicsSettingsWidget : public UMTKWidget
 {
 	GENERATED_BODY()
 
@@ -33,25 +33,25 @@ public:
 	UComboBoxString* ModeComboBox;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="GraphicSettingWidget")
-	UArrowSwitchWidget* OverallQuality;
+	UMTKArrowSwitchWidget* OverallQuality;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="GraphicSettingWidget")
-	UArrowSwitchWidget* ViewDistanceQuality;
+	UMTKArrowSwitchWidget* ViewDistanceQuality;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="GraphicSettingWidget")
-	UArrowSwitchWidget* GlobalIlluminationQuality;
+	UMTKArrowSwitchWidget* GlobalIlluminationQuality;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="GraphicSettingWidget")
-	UArrowSwitchWidget* ShadowQuality;
+	UMTKArrowSwitchWidget* ShadowQuality;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="GraphicSettingWidget")
-	UArrowSwitchWidget* PostProcessingQuality;
+	UMTKArrowSwitchWidget* PostProcessingQuality;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="GraphicSettingWidget")
-	UArrowSwitchWidget* AntiAliasingQuality;
+	UMTKArrowSwitchWidget* AntiAliasingQuality;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="GraphicSettingWidget")
-	UArrowSwitchWidget* ReflectionQuality;
+	UMTKArrowSwitchWidget* ReflectionQuality;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="GraphicSettingWidget")
 	UButton* ApplyButton;
@@ -75,7 +75,7 @@ private:
 	FTimerHandle InitTimerHandle;
 
 	UPROPERTY(VisibleAnywhere)
-	UMetaToolkitSaveGame* MetaToolkitSaveGame;
+	UMTKSaveGame* MTKSaveGame;
 
 protected:
 	virtual void NativeConstruct() override;

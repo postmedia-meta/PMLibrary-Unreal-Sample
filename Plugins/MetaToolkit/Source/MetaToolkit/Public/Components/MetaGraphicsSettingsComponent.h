@@ -3,8 +3,8 @@
 #include "CoreMinimal.h"
 #include "MetaGraphicsSettingsComponent.generated.h"
 
-class UMetaToolkitSaveGame;
-class UMetaGraphicsSettingsWidget;
+class UMTKSaveGame;
+class UMTKGraphicsSettingsWidget;
 
 UCLASS(ClassGroup = "MetaToolkit", meta = (BlueprintSpawnableComponent))
 class METATOOLKIT_API UMetaGraphicsSettingsComponent : public UActorComponent
@@ -15,7 +15,7 @@ class METATOOLKIT_API UMetaGraphicsSettingsComponent : public UActorComponent
 	
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Meta Graphics Settings")
-	UMetaGraphicsSettingsWidget* GraphicsSettingsWidget = nullptr;
+	UMTKGraphicsSettingsWidget* GraphicsSettingsWidget = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Meta Graphics Settings")
 	TSubclassOf<UUserWidget> GraphicsSettingWidgetClass;

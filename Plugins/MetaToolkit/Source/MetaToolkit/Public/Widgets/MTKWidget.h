@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "MetaWidget.generated.h"
+#include "MTKWidget.generated.h"
 
 class UScaleBox;
 class USizeBox;
@@ -13,12 +13,12 @@ class UImage;
 class UCanvasPanelSlot;
 
 UCLASS(meta=(DisableNativeTick))
-class METATOOLKIT_API UMetaWidget : public UUserWidget
+class METATOOLKIT_API UMTKWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
 public:
-	UMetaWidget(const FObjectInitializer& ObjectInitializer);
+	UMTKWidget(const FObjectInitializer& ObjectInitializer);
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="MetaWidget")
 	UScaleBox* ScaleBox;

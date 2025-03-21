@@ -1,19 +1,19 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MetaWidget.h"
+#include "Widgets/MTKWidget.h"
 
 #include "Components/CanvasPanelSlot.h"
 #include "Components/Image.h"
 #include "Components/SizeBox.h"
 #include "GameFramework/GameUserSettings.h"
 
-UMetaWidget::UMetaWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+UMTKWidget::UMTKWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	SetCursor(EMouseCursor::Type::None);
 }
 
-void UMetaWidget::NativeConstruct()
+void UMTKWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
@@ -54,10 +54,10 @@ void UMetaWidget::NativeConstruct()
 	MetaCursorCanvasPanelSlot->SetPosition(MousePosition);
 
 	// Event
-	FViewport::ViewportResizedEvent.AddUObject(this, &UMetaWidget::MetaNativeOnViewportResized);
+	FViewport::ViewportResizedEvent.AddUObject(this, &UMTKWidget::MetaNativeOnViewportResized);
 }
 
-FReply UMetaWidget::NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+FReply UMTKWidget::NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	if (PlayerController && MetaCursorCanvasPanelSlot)
 	{
@@ -70,20 +70,20 @@ FReply UMetaWidget::NativeOnMouseMove(const FGeometry& InGeometry, const FPointe
 	return Super::NativeOnMouseMove(InGeometry, InMouseEvent);
 }
 
-void UMetaWidget::MetaNativeOnViewportResized(FViewport* Viewport, unsigned int I)
+void UMTKWidget::MetaNativeOnViewportResized(FViewport* Viewport, unsigned int I)
 {
 	ViewportSize = Viewport->GetSizeXY();
 	SetSizeBoxSize(ViewportSize.X, ViewportSize.Y);
 	if (bAutoResize) MetaCursorResizing();
 }
 
-void UMetaWidget::SetSizeBoxSize(const int32 Width, const int32 Height)
+void UMTKWidget::SetSizeBoxSize(const int32 Width, const int32 Height)
 {
 	SizeBox->SetWidthOverride(Width);
 	SizeBox->SetHeightOverride(Height);
 }
 
-void UMetaWidget::MetaCursorResizing()
+void UMTKWidget::MetaCursorResizing()
 {
 	if (MetaCursorCanvasPanelSlot)
 	{

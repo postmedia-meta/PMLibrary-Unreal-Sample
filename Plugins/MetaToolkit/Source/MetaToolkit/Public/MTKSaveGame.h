@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
-#include "MetaToolkitSaveGame.generated.h"
+#include "MTKSaveGame.generated.h"
 
 USTRUCT(BlueprintType)
 struct FGraphicsSettings
@@ -43,20 +43,20 @@ struct FGraphicsSettings
 };
 
 UCLASS()
-class METATOOLKIT_API UMetaToolkitSaveGame : public USaveGame
+class METATOOLKIT_API UMTKSaveGame : public USaveGame
 {
 	GENERATED_BODY()
 
-	UMetaToolkitSaveGame();
-	virtual ~UMetaToolkitSaveGame() override;
+	UMTKSaveGame();
+	virtual ~UMTKSaveGame() override;
 
 	static void LoadSaveGame();
 	
-	static UMetaToolkitSaveGame* MetaToolkitSaveGame;
+	static UMTKSaveGame* MTKSaveGame;
 
 public:
 	UFUNCTION(BlueprintGetter, Category="SaveGame|MetaToolkit", meta=(DisplayName="Get MetaToolkit singleton instance"))
-	static UMetaToolkitSaveGame* Get();
+	static UMTKSaveGame* Get();
 
 	UFUNCTION(BlueprintCallable, Category="SaveGame|MetaToolkit")
 	void SaveGame();

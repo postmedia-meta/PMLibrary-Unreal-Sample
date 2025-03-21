@@ -27,6 +27,7 @@ public class MetaToolkit : ModuleRules
 			{
 				"Core",
 				"UMG",
+				"InputCore"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
-#include "ArrowSwitchWidget.generated.h"
+#include "MTKArrowSwitchWidget.generated.h"
 
 class UTextBlock;
 class UButton;
@@ -13,7 +13,7 @@ class UButton;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChangedIndex, const int32, Index);
 
 UCLASS()
-class METATOOLKIT_API UArrowSwitchWidget : public UUserWidget
+class METATOOLKIT_API UMTKArrowSwitchWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	

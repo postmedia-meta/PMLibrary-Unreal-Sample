@@ -1,22 +1,22 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MetaGraphicsSettingsWidget.h"
+#include "Widgets/MTKGraphicsSettingsWidget.h"
 
-#include "ArrowSwitchWidget.h"
-#include "MetaToolkitSaveGame.h"
+#include "Widgets/MTKArrowSwitchWidget.h"
+#include "MTKSaveGame.h"
 #include "Components/Button.h"
 #include "Components/ComboBoxString.h"
 #include "Components/EditableText.h"
 #include "Components/TextBlock.h"
 #include "GameFramework/GameUserSettings.h"
 
-void UMetaGraphicsSettingsWidget::NativeConstruct()
+void UMTKGraphicsSettingsWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	MetaToolkitSaveGame = UMetaToolkitSaveGame::Get();
-	if (MetaToolkitSaveGame == nullptr)
+	MTKSaveGame = UMTKSaveGame::Get();
+	if (MTKSaveGame == nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("MetaToolkitSaveGame is nullptr!!!"));
 		return;
@@ -29,17 +29,17 @@ void UMetaGraphicsSettingsWidget::NativeConstruct()
 		return;
 	}
 
-	ResolutionX->OnTextCommitted.AddDynamic(this, &UMetaGraphicsSettingsWidget::ChangeResolutionX);
-	ResolutionY->OnTextCommitted.AddDynamic(this, &UMetaGraphicsSettingsWidget::ChangeResolutionY);
-	ApplyButton->OnClicked.AddDynamic(this, &UMetaGraphicsSettingsWidget::ApplySettings);
-	CloseButton->OnClicked.AddDynamic(this, &UMetaGraphicsSettingsWidget::HideWidget);
-	ScreenMessageButton->OnClicked.AddDynamic(this, &UMetaGraphicsSettingsWidget::ToggleScreenMessage);
-	OverallQuality->OnChangedIndex.AddDynamic(this, &UMetaGraphicsSettingsWidget::ChangeOverallQuality);
+	ResolutionX->OnTextCommitted.AddDynamic(this, &UMTKGraphicsSettingsWidget::ChangeResolutionX);
+	ResolutionY->OnTextCommitted.AddDynamic(this, &UMTKGraphicsSettingsWidget::ChangeResolutionY);
+	ApplyButton->OnClicked.AddDynamic(this, &UMTKGraphicsSettingsWidget::ApplySettings);
+	CloseButton->OnClicked.AddDynamic(this, &UMTKGraphicsSettingsWidget::HideWidget);
+	ScreenMessageButton->OnClicked.AddDynamic(this, &UMTKGraphicsSettingsWidget::ToggleScreenMessage);
+	OverallQuality->OnChangedIndex.AddDynamic(this, &UMTKGraphicsSettingsWidget::ChangeOverallQuality);
 
 	Setup();
 }
 
-void UMetaGraphicsSettingsWidget::NativeDestruct()
+void UMTKGraphicsSettingsWidget::NativeDestruct()
 {
 	Super::NativeDestruct();
 
@@ -50,7 +50,7 @@ void UMetaGraphicsSettingsWidget::NativeDestruct()
 	}
 }
 
-void UMetaGraphicsSettingsWidget::MetaNativeOnViewportResized(FViewport* Viewport, unsigned int I)
+void UMTKGraphicsSettingsWidget::MetaNativeOnViewportResized(FViewport* Viewport, unsigned int I)
 {
 	Super::MetaNativeOnViewportResized(Viewport, I);
 	
@@ -60,7 +60,7 @@ void UMetaGraphicsSettingsWidget::MetaNativeOnViewportResized(FViewport* Viewpor
 	}
 }
 
-void UMetaGraphicsSettingsWidget::Setup()
+void UMTKGraphicsSettingsWidget::Setup()
 {
 	if (ViewportSize.X > 0 && ViewportSize.Y > 0)
 	{
@@ -71,28 +71,28 @@ void UMetaGraphicsSettingsWidget::Setup()
 	}
 	else
 	{
-		GetWorld()->GetTimerManager().SetTimer(InitTimerHandle, this, &UMetaGraphicsSettingsWidget::Setup, 0.1f, false);
+		GetWorld()->GetTimerManager().SetTimer(InitTimerHandle, this, &UMTKGraphicsSettingsWidget::Setup, 0.1f, false);
 	}
 }
 
-void UMetaGraphicsSettingsWidget::InitVariable()
+void UMTKGraphicsSettingsWidget::InitVariable()
 {
 	// Screen Message
-	GAreScreenMessagesEnabled = MetaToolkitSaveGame->GraphicsSettings.bEnabledScreenMessage;
+	GAreScreenMessagesEnabled = MTKSaveGame->GraphicsSettings.bEnabledScreenMessage;
 	ScreenMessageStateTextBlock->SetText(GAreScreenMessagesEnabled ? FText::FromString(TEXT("Show")) : FText::FromString(TEXT("Hide")));
 	
 	// Quality setting
-	OverallQuality->SetCurrentIndex(MetaToolkitSaveGame->GraphicsSettings.OverallQuality);
-	ViewDistanceQuality->SetCurrentIndex(MetaToolkitSaveGame->GraphicsSettings.ViewDistanceQuality);
-	GlobalIlluminationQuality->SetCurrentIndex(MetaToolkitSaveGame->GraphicsSettings.GlobalIlluminationQuality);
-	ShadowQuality->SetCurrentIndex(MetaToolkitSaveGame->GraphicsSettings.ShadowQuality);
-	PostProcessingQuality->SetCurrentIndex(MetaToolkitSaveGame->GraphicsSettings.PostProcessingQuality);
-	AntiAliasingQuality->SetCurrentIndex(MetaToolkitSaveGame->GraphicsSettings.AntiAliasingQuality);
-	ReflectionQuality->SetCurrentIndex(MetaToolkitSaveGame->GraphicsSettings.ReflectionQuality);
+	OverallQuality->SetCurrentIndex(MTKSaveGame->GraphicsSettings.OverallQuality);
+	ViewDistanceQuality->SetCurrentIndex(MTKSaveGame->GraphicsSettings.ViewDistanceQuality);
+	GlobalIlluminationQuality->SetCurrentIndex(MTKSaveGame->GraphicsSettings.GlobalIlluminationQuality);
+	ShadowQuality->SetCurrentIndex(MTKSaveGame->GraphicsSettings.ShadowQuality);
+	PostProcessingQuality->SetCurrentIndex(MTKSaveGame->GraphicsSettings.PostProcessingQuality);
+	AntiAliasingQuality->SetCurrentIndex(MTKSaveGame->GraphicsSettings.AntiAliasingQuality);
+	ReflectionQuality->SetCurrentIndex(MTKSaveGame->GraphicsSettings.ReflectionQuality);
 
 	// Get save viewport size
-	const FIntPoint Resolution = MetaToolkitSaveGame->GraphicsSettings.Resolution;
-	const EWindowMode::Type WindowMode = static_cast<EWindowMode::Type>(MetaToolkitSaveGame->GraphicsSettings.WindowMode);
+	const FIntPoint Resolution = MTKSaveGame->GraphicsSettings.Resolution;
+	const EWindowMode::Type WindowMode = static_cast<EWindowMode::Type>(MTKSaveGame->GraphicsSettings.WindowMode);
 
 	// Viewport setting
 	ResolutionX->SetText(FText::FromString(FString::FromInt(Resolution.X)));
@@ -113,17 +113,17 @@ void UMetaGraphicsSettingsWidget::InitVariable()
 	}
 }
 
-void UMetaGraphicsSettingsWidget::ChangeResolutionX(const FText& Text, ETextCommit::Type CommitMethod)
+void UMTKGraphicsSettingsWidget::ChangeResolutionX(const FText& Text, ETextCommit::Type CommitMethod)
 {
 	if (FCString::Atoi(*Text.ToString()) <= 0) ResolutionX->SetText(FText::FromString(TEXT("1920")));
 }
 
-void UMetaGraphicsSettingsWidget::ChangeResolutionY(const FText& Text, ETextCommit::Type CommitMethod)
+void UMTKGraphicsSettingsWidget::ChangeResolutionY(const FText& Text, ETextCommit::Type CommitMethod)
 {
 	if (FCString::Atoi(*Text.ToString()) <= 0) ResolutionY->SetText(FText::FromString(TEXT("1080")));
 }
 
-void UMetaGraphicsSettingsWidget::ChangeOverallQuality(const int32 Quality)
+void UMTKGraphicsSettingsWidget::ChangeOverallQuality(const int32 Quality)
 {
 	ViewDistanceQuality->SetCurrentIndex(Quality);
 	GlobalIlluminationQuality->SetCurrentIndex(Quality);
@@ -133,35 +133,35 @@ void UMetaGraphicsSettingsWidget::ChangeOverallQuality(const int32 Quality)
 	ReflectionQuality->SetCurrentIndex(Quality);
 }
 
-void UMetaGraphicsSettingsWidget::ShowWidget()
+void UMTKGraphicsSettingsWidget::ShowWidget()
 {
 	InitVariable();
 	PlayerController->SetInputMode(FInputModeGameAndUI());
 	SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 }
 
-void UMetaGraphicsSettingsWidget::HideWidget()
+void UMTKGraphicsSettingsWidget::HideWidget()
 {
 	PlayerController->SetInputMode(FInputModeGameOnly());
 	SetVisibility(ESlateVisibility::Collapsed);
 }
 
-void UMetaGraphicsSettingsWidget::ToggleScreenMessage()
+void UMTKGraphicsSettingsWidget::ToggleScreenMessage()
 {
 	GAreScreenMessagesEnabled = !GAreScreenMessagesEnabled;
 	ScreenMessageStateTextBlock->SetText(GAreScreenMessagesEnabled ? FText::FromString(TEXT("Show")) : FText::FromString(TEXT("Hide")));
 }
 
-void UMetaGraphicsSettingsWidget::ApplySettings()
+void UMTKGraphicsSettingsWidget::ApplySettings()
 {
-	MetaToolkitSaveGame->GraphicsSettings.bEnabledScreenMessage = GAreScreenMessagesEnabled;
-	MetaToolkitSaveGame->SaveGame();
+	MTKSaveGame->GraphicsSettings.bEnabledScreenMessage = GAreScreenMessagesEnabled;
+	MTKSaveGame->SaveGame();
 	
 	ApplyResolutionSettings();
 	ApplyGraphicsSettings();
 }
 
-void UMetaGraphicsSettingsWidget::ApplyResolutionSettings()
+void UMTKGraphicsSettingsWidget::ApplyResolutionSettings()
 {
 	const FIntPoint Resolution = FIntPoint(FCString::Atoi(*ResolutionX->GetText().ToString()), FCString::Atoi(*ResolutionY->GetText().ToString()));
 	const EWindowMode::Type WindowMode = WindowModeMap.FindRef(ModeComboBox->GetSelectedIndex());
@@ -173,14 +173,14 @@ void UMetaGraphicsSettingsWidget::ApplyResolutionSettings()
 	GameUserSettings->SetFullscreenMode(WindowMode);
 	GameUserSettings->ApplyResolutionSettings(false);
 
-	MetaToolkitSaveGame->GraphicsSettings.Resolution = Resolution;
-	MetaToolkitSaveGame->GraphicsSettings.WindowMode = static_cast<uint8>(WindowMode);
-	MetaToolkitSaveGame->SaveGame();
+	MTKSaveGame->GraphicsSettings.Resolution = Resolution;
+	MTKSaveGame->GraphicsSettings.WindowMode = static_cast<uint8>(WindowMode);
+	MTKSaveGame->SaveGame();
 
 	UE_LOG(LogTemp, Log, TEXT("Apply resolution settings %s // %s"), *Resolution.ToString(), *ModeComboBox->GetSelectedOption());
 }
 
-void UMetaGraphicsSettingsWidget::ApplyGraphicsSettings()
+void UMTKGraphicsSettingsWidget::ApplyGraphicsSettings()
 {
 	GameUserSettings->SetOverallScalabilityLevel(OverallQuality->GetCurrentIndex());
 	GameUserSettings->SetViewDistanceQuality(ViewDistanceQuality->GetCurrentIndex());
@@ -191,14 +191,14 @@ void UMetaGraphicsSettingsWidget::ApplyGraphicsSettings()
 	GameUserSettings->SetReflectionQuality(ReflectionQuality->GetCurrentIndex());
 	GameUserSettings->ApplySettings(false);
 
-	MetaToolkitSaveGame->GraphicsSettings.OverallQuality = OverallQuality->GetCurrentIndex();
-	MetaToolkitSaveGame->GraphicsSettings.ViewDistanceQuality = ViewDistanceQuality->GetCurrentIndex();
-	MetaToolkitSaveGame->GraphicsSettings.GlobalIlluminationQuality = GlobalIlluminationQuality->GetCurrentIndex();
-	MetaToolkitSaveGame->GraphicsSettings.ShadowQuality = ShadowQuality->GetCurrentIndex();
-	MetaToolkitSaveGame->GraphicsSettings.PostProcessingQuality = PostProcessingQuality->GetCurrentIndex();
-	MetaToolkitSaveGame->GraphicsSettings.AntiAliasingQuality = AntiAliasingQuality->GetCurrentIndex();
-	MetaToolkitSaveGame->GraphicsSettings.ReflectionQuality = ReflectionQuality->GetCurrentIndex();
-	MetaToolkitSaveGame->SaveGame();
+	MTKSaveGame->GraphicsSettings.OverallQuality = OverallQuality->GetCurrentIndex();
+	MTKSaveGame->GraphicsSettings.ViewDistanceQuality = ViewDistanceQuality->GetCurrentIndex();
+	MTKSaveGame->GraphicsSettings.GlobalIlluminationQuality = GlobalIlluminationQuality->GetCurrentIndex();
+	MTKSaveGame->GraphicsSettings.ShadowQuality = ShadowQuality->GetCurrentIndex();
+	MTKSaveGame->GraphicsSettings.PostProcessingQuality = PostProcessingQuality->GetCurrentIndex();
+	MTKSaveGame->GraphicsSettings.AntiAliasingQuality = AntiAliasingQuality->GetCurrentIndex();
+	MTKSaveGame->GraphicsSettings.ReflectionQuality = ReflectionQuality->GetCurrentIndex();
+	MTKSaveGame->SaveGame();
 	
 	UE_LOG(LogTemp, Log, TEXT("Apply Graphics settings"));
 }
