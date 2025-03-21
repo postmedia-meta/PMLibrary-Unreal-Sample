@@ -29,22 +29,25 @@ void UMetaGraphicsSettingsWidget::NativeConstruct()
 		return;
 	}
 
-	GameUserSettings = UGameUserSettings::GetGameUserSettings();
-	if (GameUserSettings == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("GameUserSettings is nullptr!!!"));
-		return;
-	}
-	
-	InitVariable();
-	ApplySettings();
-	
 	ResolutionX->OnTextCommitted.AddDynamic(this, &UMetaGraphicsSettingsWidget::ChangeResolutionX);
 	ResolutionY->OnTextCommitted.AddDynamic(this, &UMetaGraphicsSettingsWidget::ChangeResolutionY);
 	ApplyButton->OnClicked.AddDynamic(this, &UMetaGraphicsSettingsWidget::ApplySettings);
 	CloseButton->OnClicked.AddDynamic(this, &UMetaGraphicsSettingsWidget::HideWidget);
 	ScreenMessageButton->OnClicked.AddDynamic(this, &UMetaGraphicsSettingsWidget::ToggleScreenMessage);
 	OverallQuality->OnChangedIndex.AddDynamic(this, &UMetaGraphicsSettingsWidget::ChangeOverallQuality);
+
+	Setup();
+}
+
+void UMetaGraphicsSettingsWidget::NativeDestruct()
+{
+	Super::NativeDestruct();
+
+	if (InitTimerHandle.IsValid())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(InitTimerHandle);
+		InitTimerHandle.Invalidate();
+	}
 }
 
 void UMetaGraphicsSettingsWidget::MetaNativeOnViewportResized(FViewport* Viewport, unsigned int I)
@@ -54,6 +57,21 @@ void UMetaGraphicsSettingsWidget::MetaNativeOnViewportResized(FViewport* Viewpor
 	if (PlayerController != nullptr)
 	{
 		ViewportSizeTextBlock->SetText(FText::FromString(FString::Printf(TEXT("%dx%d"), ViewportSize.X, ViewportSize.Y)));	
+	}
+}
+
+void UMetaGraphicsSettingsWidget::Setup()
+{
+	if (ViewportSize.X > 0 && ViewportSize.Y > 0)
+	{
+		ViewportSizeTextBlock->SetText(FText::FromString(FString::Printf(TEXT("%dx%d"), ViewportSize.X, ViewportSize.Y)));
+		
+		InitVariable();
+		ApplySettings();
+	}
+	else
+	{
+		GetWorld()->GetTimerManager().SetTimer(InitTimerHandle, this, &UMetaGraphicsSettingsWidget::Setup, 0.1f, false);
 	}
 }
 
@@ -107,7 +125,6 @@ void UMetaGraphicsSettingsWidget::ChangeResolutionY(const FText& Text, ETextComm
 
 void UMetaGraphicsSettingsWidget::ChangeOverallQuality(const int32 Quality)
 {
-	OverallQuality->SetCurrentIndex(Quality);
 	ViewDistanceQuality->SetCurrentIndex(Quality);
 	GlobalIlluminationQuality->SetCurrentIndex(Quality);
 	ShadowQuality->SetCurrentIndex(Quality);
@@ -148,7 +165,7 @@ void UMetaGraphicsSettingsWidget::ApplyResolutionSettings()
 {
 	const FIntPoint Resolution = FIntPoint(FCString::Atoi(*ResolutionX->GetText().ToString()), FCString::Atoi(*ResolutionY->GetText().ToString()));
 	const EWindowMode::Type WindowMode = WindowModeMap.FindRef(ModeComboBox->GetSelectedIndex());
-	
+
 	if (ViewportSize == Resolution && GameUserSettings->GetFullscreenMode() == WindowMode) return;
 	if (GameUserSettings->GetFullscreenMode() == WindowMode &&  WindowMode == EWindowMode::Type::WindowedFullscreen) return;
 	

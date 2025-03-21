@@ -14,7 +14,7 @@ class UComboBoxString;
 class UEditableText;
 class UMetaToolkitSaveGame;
 
-UCLASS()
+UCLASS(meta=(DisableNativeTick))
 class METATOOLKIT_API UMetaGraphicsSettingsWidget : public UMetaWidget
 {
 	GENERATED_BODY()
@@ -71,17 +71,21 @@ private:
 		{1, EWindowMode::Type::WindowedFullscreen},
 		{2, EWindowMode::Type::Windowed}
 	};
-	
-	UPROPERTY()
-	UGameUserSettings* GameUserSettings;
+
+	FTimerHandle InitTimerHandle;
 
 	UPROPERTY(VisibleAnywhere)
 	UMetaToolkitSaveGame* MetaToolkitSaveGame;
 
 protected:
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 	virtual void MetaNativeOnViewportResized(FViewport* Viewport, unsigned int I) override;
 
+private:
+	UFUNCTION()
+	void Setup();
+	
 public:
 	UFUNCTION(BlueprintCallable, Category="GraphicSettingWidget")
 	void InitVariable();

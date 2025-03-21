@@ -12,7 +12,7 @@ class UCanvasPanel;
 class UImage;
 class UCanvasPanelSlot;
 
-UCLASS()
+UCLASS(meta=(DisableNativeTick))
 class METATOOLKIT_API UMetaWidget : public UUserWidget
 {
 	GENERATED_BODY()
@@ -36,15 +36,27 @@ protected:
 	UPROPERTY(BlueprintReadWrite, Category="MetaWidget")
 	FIntPoint ViewportSize = FIntPoint(0, 0);
 
-	UPROPERTY(BlueprintReadWrite, Category="MetaWidget")
+	UPROPERTY(BlueprintReadWrite, Category="MetaWidget|Mouse")
 	FVector2D MousePosition = FVector2D(0, 0);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaWidget|Mouse")
+	bool bAutoResize = true;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PlayerController")
-	APlayerController* PlayerController;
+	APlayerController* PlayerController = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GameUserSettings")
+	UGameUserSettings* GameUserSettings = nullptr;
 
 private:
 	UPROPERTY()
-	UCanvasPanelSlot* MetaCursorCanvasPanelSlot;
+	FVector2D OriginViewportSize = FVector2D(0, 0);
+
+	UPROPERTY()
+	FVector2D OriginCursorSize = FVector2D(0, 0);
+	
+	UPROPERTY()
+	UCanvasPanelSlot* MetaCursorCanvasPanelSlot = nullptr;
 
 protected:
 	virtual void NativeConstruct() override;
@@ -54,4 +66,7 @@ protected:
 public:
 	UFUNCTION(BlueprintCallable, Category="MetaWidget")
 	void SetSizeBoxSize(const int32 Width, const int32 Height);
+
+	UFUNCTION(BlueprintCallable, Category="MetaWidget")
+	void MetaCursorResizing();
 };

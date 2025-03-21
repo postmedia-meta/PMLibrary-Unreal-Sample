@@ -41,7 +41,7 @@ void UArrowSwitchWidget::ClickNextButton()
 
 void UArrowSwitchWidget::SetCurrentIndex(const int32 Index)
 {
-	if (Index >= Elements.Num() || Index == CurrentIndex) return;
+	if (Index >= Elements.Num()) return;
 	
 	CurrentIndex = Index;
 	TextBlock->SetText(FText::FromString(Elements[CurrentIndex]));
