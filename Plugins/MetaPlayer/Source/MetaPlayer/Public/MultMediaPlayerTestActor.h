@@ -3,24 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MultiMediaSyncPlayer.h"
 #include "GameFramework/Actor.h"
-#include "MultiMediaSyncPlayer.generated.h"
-
-class UFileMediaSource;
-class UMultiMediaSyncComponent;
-class UMediaPlayer;
-class UMediaTexture;
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerStateChangeEvent, const EMultiMediaState, MultiMediaState);
+#include "MultMediaPlayerTestActor.generated.h"
 
 UCLASS()
-class METAPLAYER_API AMultiMediaSyncPlayer : public AActor
+class METAPLAYER_API AMultMediaPlayerTestActor : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	AMultiMediaSyncPlayer();
+	AMultMediaPlayerTestActor();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MultiMediaSyncPlayer")
 	USceneComponent* DefaultSceneComponent;
@@ -69,4 +63,5 @@ private:
 public:
 	UFUNCTION(BlueprintCallable)
 	TArray<UMediaTexture*> GetMediaTextures() {return MediaTextures;}
+
 };

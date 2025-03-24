@@ -1,14 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MultiMediaSyncPlayer.h"
+#include "MultMediaPlayerTestActor.h"
 
 #include "MediaPlayer.h"
 #include "MediaTexture.h"
 #include "MultiMediaSyncComponent.h"
 
 // Sets default values
-AMultiMediaSyncPlayer::AMultiMediaSyncPlayer()
+AMultMediaPlayerTestActor::AMultMediaPlayerTestActor()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -20,19 +20,19 @@ AMultiMediaSyncPlayer::AMultiMediaSyncPlayer()
 }
 
 // Called when the game starts or when spawned
-void AMultiMediaSyncPlayer::BeginPlay()
+void AMultMediaPlayerTestActor::BeginPlay()
 {
 	Super::BeginPlay();
 
 	MultiMediaSyncComponent->bLoop = bLoop;
-	MultiMediaSyncComponent->OnChangedMultiMediaState.AddDynamic(this, &AMultiMediaSyncPlayer::ChangedMediaState);
+	MultiMediaSyncComponent->OnChangedMultiMediaState.AddDynamic(this, &AMultMediaPlayerTestActor::ChangedMediaState);
 }
 
-void AMultiMediaSyncPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
+void AMultMediaPlayerTestActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 	
-	MultiMediaSyncComponent->OnChangedMultiMediaState.RemoveDynamic(this, &AMultiMediaSyncPlayer::ChangedMediaState);
+	MultiMediaSyncComponent->OnChangedMultiMediaState.RemoveDynamic(this, &AMultMediaPlayerTestActor::ChangedMediaState);
 	OnPlayerStateChangeEvent.Clear();
 
 	for (auto& MediaPlayer : MediaPlayers) { MediaPlayer = nullptr; }
@@ -41,7 +41,7 @@ void AMultiMediaSyncPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	MediaTextures.Empty();
 }
 
-void AMultiMediaSyncPlayer::Ready()
+void AMultMediaPlayerTestActor::Ready()
 {
 	for (int32 i = 0; i < MediaSources.Num(); ++i)
 	{
@@ -58,7 +58,7 @@ void AMultiMediaSyncPlayer::Ready()
 	MultiMediaSyncComponent->Prepare();
 }
 
-void AMultiMediaSyncPlayer::Play()
+void AMultMediaPlayerTestActor::Play()
 {
 	bPlayRequest = true;
 	if (MultiMediaSyncComponent->GetMultiMediaState() == EMultiMediaState::None)
@@ -71,14 +71,14 @@ void AMultiMediaSyncPlayer::Play()
 	}
 }
 
-void AMultiMediaSyncPlayer::Stop()
+void AMultMediaPlayerTestActor::Stop()
 {
 	if (MultiMediaSyncComponent->GetMultiMediaState() != EMultiMediaState::Playing) return;
 	
 	MultiMediaSyncComponent->Pause();
 }
 
-void AMultiMediaSyncPlayer::ChangedMediaState(const EMultiMediaState NewState)
+void AMultMediaPlayerTestActor::ChangedMediaState(const EMultiMediaState NewState)
 {
 	if (OnPlayerStateChangeEvent.IsBound())
 	{
@@ -91,3 +91,4 @@ void AMultiMediaSyncPlayer::ChangedMediaState(const EMultiMediaState NewState)
 		MultiMediaSyncComponent->Play();
 	}
 }
+
