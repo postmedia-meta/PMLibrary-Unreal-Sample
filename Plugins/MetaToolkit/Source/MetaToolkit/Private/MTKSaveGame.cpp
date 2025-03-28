@@ -2,7 +2,6 @@
 
 
 #include "MTKSaveGame.h"
-
 #include "Kismet/GameplayStatics.h"
 
 UMTKSaveGame* UMTKSaveGame::MTKSaveGame = nullptr;

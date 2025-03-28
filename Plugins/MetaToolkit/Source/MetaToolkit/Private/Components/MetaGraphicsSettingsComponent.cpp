@@ -4,6 +4,7 @@
 
 #include "Widgets/MTKGraphicsSettingsWidget.h"
 #include "Blueprint/UserWidget.h"
+#include "UObject/ConstructorHelpers.h"
 
 UMetaGraphicsSettingsComponent::UMetaGraphicsSettingsComponent()
 {

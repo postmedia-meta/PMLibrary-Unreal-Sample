@@ -5,6 +5,7 @@
 
 #include "Components/MetaGraphicsSettingsComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Components/InputComponent.h"
 
 AMTKPlayerController::AMTKPlayerController()
 {
@@ -22,5 +23,5 @@ void AMTKPlayerController::SetupInputComponent()
 
 void AMTKPlayerController::Escape()
 {
-	UKismetSystemLibrary::QuitGame(GetWorld(), this, EQuitPreference::Type::Quit, false);
+	UKismetSystemLibrary::QuitGame(this, this, EQuitPreference::Type::Quit, false);
 }

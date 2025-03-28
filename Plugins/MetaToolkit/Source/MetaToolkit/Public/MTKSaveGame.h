@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
+#include "GenericPlatform/GenericWindow.h"
 #include "MTKSaveGame.generated.h"
 
 USTRUCT(BlueprintType)
@@ -11,34 +12,34 @@ struct FGraphicsSettings
 {
 	GENERATED_BODY()
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Graphics")
 	FIntPoint Resolution = FIntPoint(1920, 1080);
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Graphics")
 	uint8 WindowMode = EWindowMode::Windowed;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Graphics")
 	uint8 OverallQuality = 3;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Graphics")
 	uint8 ViewDistanceQuality = 3;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Graphics")
 	uint8 GlobalIlluminationQuality = 3;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Graphics")
 	uint8 ShadowQuality = 3;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Graphics")
 	uint8 PostProcessingQuality = 3;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Graphics")
 	uint8 AntiAliasingQuality = 3;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Graphics")
 	uint8 ReflectionQuality = 3;
 	
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="Graphics")
 	bool bEnabledScreenMessage = true;
 };
 

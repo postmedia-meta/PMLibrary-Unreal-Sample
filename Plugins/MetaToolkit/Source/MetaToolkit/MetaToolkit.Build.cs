@@ -7,7 +7,7 @@ public class MetaToolkit : ModuleRules
 	public MetaToolkit(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		
+			
 		PublicIncludePaths.AddRange(
 			new string[] {
 				// ... add public include paths required here ...
@@ -26,8 +26,6 @@ public class MetaToolkit : ModuleRules
 			new string[]
 			{
 				"Core",
-				"UMG",
-				"InputCore"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -36,6 +34,9 @@ public class MetaToolkit : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
+				"UMG",
+				"InputCore",
+				"ApplicationCore",
 				"CoreUObject",
 				"Engine",
 				"Slate",

@@ -1,8 +1,10 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "Components//ActorComponent.h"
 #include "MetaGraphicsSettingsComponent.generated.h"
 
+class UUserWidget;
 class UMTKSaveGame;
 class UMTKGraphicsSettingsWidget;
 

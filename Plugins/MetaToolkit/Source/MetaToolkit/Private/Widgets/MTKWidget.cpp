@@ -7,6 +7,7 @@
 #include "Components/Image.h"
 #include "Components/SizeBox.h"
 #include "GameFramework/GameUserSettings.h"
+#include "UnrealClient.h"
 
 UMTKWidget::UMTKWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {

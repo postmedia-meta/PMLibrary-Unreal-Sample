@@ -10,6 +10,7 @@
 #include "Components/EditableText.h"
 #include "Components/TextBlock.h"
 #include "GameFramework/GameUserSettings.h"
+#include "TimerManager.h"
 
 void UMTKGraphicsSettingsWidget::NativeConstruct()
 {

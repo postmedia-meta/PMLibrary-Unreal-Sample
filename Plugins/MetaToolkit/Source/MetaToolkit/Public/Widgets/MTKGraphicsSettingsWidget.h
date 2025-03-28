@@ -74,7 +74,7 @@ private:
 
 	FTimerHandle InitTimerHandle;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="SaveGame")
 	UMTKSaveGame* MTKSaveGame;
 
 protected:
