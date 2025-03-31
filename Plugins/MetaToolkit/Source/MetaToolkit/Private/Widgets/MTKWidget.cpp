@@ -58,6 +58,13 @@ void UMTKWidget::NativeConstruct()
 	FViewport::ViewportResizedEvent.AddUObject(this, &UMTKWidget::MetaNativeOnViewportResized);
 }
 
+void UMTKWidget::NativeDestruct()
+{
+	Super::NativeDestruct();
+
+	FViewport::ViewportResizedEvent.Clear();
+}
+
 FReply UMTKWidget::NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	if (PlayerController && MetaCursorCanvasPanelSlot)

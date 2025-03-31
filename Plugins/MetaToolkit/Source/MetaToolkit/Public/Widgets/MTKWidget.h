@@ -63,6 +63,7 @@ private:
 
 protected:
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 	virtual FReply NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	virtual void MetaNativeOnViewportResized(FViewport* Viewport, unsigned int I);
 
