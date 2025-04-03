@@ -17,6 +17,7 @@ class UCheckBox;
 class UEditableText;
 class UCanvasPanelSlot;
 class UComboBoxString;
+class UTextBlock;
 
 UCLASS()
 class METAVFX_API UMetaMagicTrailWidget : public UUserWidget
@@ -89,6 +90,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="MetaMagicTrailWidget")
 	UCheckBox* UseMouseCheckBox;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="MetaMagicTrailWidget")
+	UCheckBox* UseFileCheckBox;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="MetaMagicTrailWidget")
 	UComboBoxString* MaskShapeComboBox;
@@ -98,6 +102,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="MetaMagicTrailWidget")
 	UButton* CloseButton;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="MetaMagicTrailWidget")
+	UButton* SelectedFileButton;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="MetaMagicTrailWidget")
+	UButton* ClearFileButton;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="MetaMagicTrailWidget")
+	UTextBlock* SelectedFilePathTextBlock;
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category="SaveGame")
@@ -127,6 +140,8 @@ private:
 	UPROPERTY()
 	EMouseLockMode OriginMouseLockMode;
 
+	FString FileEmptyString = TEXT("Use default asset");
+
 protected:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
@@ -153,30 +168,6 @@ public:
 
 private:
 	UFUNCTION()
-	void OnChangedInitCreatePoolNum(const FText& Text, ETextCommit::Type CommitMethod);
-	
-	UFUNCTION()
-	void OnChangedRateScale(const FText& Text, ETextCommit::Type CommitMethod);
-
-	UFUNCTION()
-	void OnChangedLifeTime(const FText& Text, ETextCommit::Type CommitMethod);
-
-	UFUNCTION()
-	void OnChangedScale(const FText& Text, ETextCommit::Type CommitMethod);
-
-	UFUNCTION()
-	void OnChangedEdgeThickness(const FText& Text, ETextCommit::Type CommitMethod);
-
-	UFUNCTION()
-	void OnChangedIntensity(const FText& Text, ETextCommit::Type CommitMethod);
-
-	UFUNCTION()
-	void OnChangedParicleActivationThresholdSec(const FText& Text, ETextCommit::Type CommitMethod);
-
-	UFUNCTION()
-	void OnChangedResetTime(const FText& Text, ETextCommit::Type CommitMethod);
-
-	UFUNCTION()
 	void OnChangedEdgeColorR(const FText& Text, ETextCommit::Type CommitMethod);
 
 	UFUNCTION()
@@ -195,5 +186,11 @@ private:
 	void OnChangedSpriteColorB(const FText& Text, ETextCommit::Type CommitMethod);
 
 	UFUNCTION()
-	void OnSelectionChangedMaskShape(FString SelectedItem, ESelectInfo::Type SelectionType);
+	void OnOpenFileButton();
+
+	UFUNCTION()
+	void OnClearFileButton();
+
+	UFUNCTION()
+	void OnChangedUseFile(bool bIsChecked);
 };

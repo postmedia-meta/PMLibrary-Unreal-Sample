@@ -57,7 +57,13 @@ struct FMetaMagicTrailData
 	bool bUseMouse = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FMetaMagicTrailData")
+	bool bUseFile = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FMetaMagicTrailData")
 	EMaskShape MaskShape = EMaskShape::Default;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="FMetaMagicTrailData")
+	FString FilePath = TEXT("");
 };
 
 UCLASS()

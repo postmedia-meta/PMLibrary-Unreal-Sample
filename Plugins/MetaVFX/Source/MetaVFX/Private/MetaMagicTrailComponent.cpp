@@ -8,6 +8,7 @@
 #include "NiagaraComponent.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetRenderingLibrary.h"
 
 UMetaMagicTrailComponent::UMetaMagicTrailComponent()
 {
@@ -76,11 +77,23 @@ void UMetaMagicTrailComponent::BeginPlay()
 	
 	ChangeMaskShape(MaskShape);
 	SpriteMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(DefaultSpriteMaterial, nullptr);
-	SpriteMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), Texture2D);
+	SpriteMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), bUseImageFile ? TextureFromFile : Texture2D);
+	SetFilePath(FPaths::ConvertRelativePathToFull(ImagePath.FilePath));
 	
 	MemoryPoolObject = NewObject<UMemoryPoolObject>(PlayerController, TEXT("Memory Pool"));
 	MemoryPoolObject->SetActorClass(MagicTrailNiagaraActorClass);
 	MemoryPoolObject->CreateActors(InitCreatePoolNum);
+	
+	if (ViewportSize.X <= 0|| ViewportSize.Y <= 0)
+	{
+		PlayerController->GetViewportSize(ViewportSize.X, ViewportSize.Y);
+
+		if (MagicTrailWidget)
+		{
+			MagicTrailWidget->SetSizeBoxSize(ViewportSize.X, ViewportSize.Y);
+			MagicTrailWidget->MetaCursorResizing();
+		}
+	}
 
 	if (bUseMouse)
 	{
@@ -93,17 +106,6 @@ void UMetaMagicTrailComponent::BeginPlay()
 	}
 
 	FViewport::ViewportResizedEvent.AddUObject(this, &UMetaMagicTrailComponent::OnViewportResized);
-
-	if (ViewportSize.X <= 0|| ViewportSize.Y <= 0)
-	{
-		PlayerController->GetViewportSize(ViewportSize.X, ViewportSize.Y);
-
-		if (MagicTrailWidget)
-		{
-			MagicTrailWidget->SetSizeBoxSize(ViewportSize.X, ViewportSize.Y);
-			MagicTrailWidget->MetaCursorResizing();
-		}
-	}
 }
 
 void UMetaMagicTrailComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -123,7 +125,7 @@ void UMetaMagicTrailComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 			GetWorld()->GetTimerManager().ClearTimer(LiDARActor.Value.DelayHandle);
 			LiDARActor.Value.DelayHandle.Invalidate();
 		}
-	}
+	}	
 
 	FViewport::ViewportResizedEvent.Clear();
 }
@@ -154,9 +156,10 @@ void UMetaMagicTrailComponent::NewMagicTrailsWithLiDAR(const TArray<int32> IDs, 
 			if (LiDARActor.Key == IDs[i])
 			{
 				IsExist = true;
+				SetLiDARActorLocationFromScreenPercentage(LiDARActor.Key, Percentages[i].X, Percentages[i].Y);
 				break;
 			}
-		}
+		}	
 		
 		if (!IsExist)
 		{
@@ -186,7 +189,7 @@ void UMetaMagicTrailComponent::UpdateMagicTrailsWithLiDAR(const TArray<int32> ID
 				SetLiDARActorLocationFromScreenPercentage(LiDARActor.Key, Percentages[i].X, Percentages[i].Y);
 				break;
 			}
-		}
+		}	
 		
 		if (!IsExist)
 		{
@@ -222,6 +225,7 @@ void UMetaMagicTrailComponent::RemoveMagicTrailsWithLiDAR(const TArray<int32> ID
 				LiDARActor.Value.NiagaraComponent = nullptr;
 
 				LiDARActors.Remove(IDs[i]);
+				break;
 			}
 		}
 	}
@@ -295,7 +299,36 @@ void UMetaMagicTrailComponent::ChangeMaskShape(const EMaskShape Shape)
 		TrailMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(SquareTrailMaterial, nullptr);
 		break;
 	}
+	
+	TrailMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), bUseImageFile ? TextureFromFile : Texture2D);
+}
+
+bool UMetaMagicTrailComponent::SetFilePath(const FString& NewFilePath)
+{
+	if(UTexture2D* LoadedTexture = UKismetRenderingLibrary::ImportFileAsTexture2D(GetWorld(), NewFilePath))
+	{
+		TextureFromFile = LoadedTexture;
+		ImagePath.FilePath = NewFilePath;
+
+		TrailMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), bUseImageFile ? TextureFromFile : Texture2D);
+		SpriteMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), bUseImageFile ? TextureFromFile : Texture2D);
+
+		return true;
+	}
+
+	TextureFromFile = nullptr;
+	ImagePath.FilePath = TEXT("");
 	TrailMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), Texture2D);
+	SpriteMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), Texture2D);
+	return false;
+}
+
+void UMetaMagicTrailComponent::ClearFilePath()
+{
+	TextureFromFile = nullptr;
+	ImagePath.FilePath = TEXT("");
+	TrailMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), Texture2D);
+	SpriteMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), Texture2D);
 }
 
 void UMetaMagicTrailComponent::OnViewportResized(FViewport* Viewport, unsigned int I)

@@ -12,7 +12,14 @@
 #include "Components/EditableText.h"
 #include "Components/Image.h"
 #include "Components/SizeBox.h"
+#include "Components/TextBlock.h"
 #include "GameFramework/PlayerController.h"
+
+#if PLATFORM_WINDOWS
+#include "Windows/AllowWindowsPlatformTypes.h"
+#include <windows.h>
+#include <commdlg.h>
+#endif
 
 void UMetaMagicTrailWidget::NativeConstruct()
 {
@@ -55,40 +62,26 @@ void UMetaMagicTrailWidget::NativeConstruct()
 	MetaCursorCanvasPanelSlot->SetPosition(MousePosition);
 
 	InitVariable();
-
-	InitCreatePoolNum->OnTextCommitted.AddDynamic(this, &UMetaMagicTrailWidget::OnChangedInitCreatePoolNum);
-	RateScale->OnTextCommitted.AddDynamic(this, &UMetaMagicTrailWidget::OnChangedRateScale);
-	LifeTime->OnTextCommitted.AddDynamic(this, &UMetaMagicTrailWidget::OnChangedLifeTime);
-	Scale->OnTextCommitted.AddDynamic(this, &UMetaMagicTrailWidget::OnChangedScale);
-	EdgeThickness->OnTextCommitted.AddDynamic(this, &UMetaMagicTrailWidget::OnChangedEdgeThickness);
-	EdgeIntensity->OnTextCommitted.AddDynamic(this, &UMetaMagicTrailWidget::OnChangedIntensity);
-	ParticleActivationThresholdSec->OnTextCommitted.AddDynamic(this, &UMetaMagicTrailWidget::OnChangedParicleActivationThresholdSec);
-	ResetTime->OnTextCommitted.AddDynamic(this, &UMetaMagicTrailWidget::OnChangedResetTime);
+	
 	EdgeColorR->OnTextCommitted.AddDynamic(this, &UMetaMagicTrailWidget::OnChangedEdgeColorR);
 	EdgeColorG->OnTextCommitted.AddDynamic(this, &UMetaMagicTrailWidget::OnChangedEdgeColorG);
 	EdgeColorB->OnTextCommitted.AddDynamic(this, &UMetaMagicTrailWidget::OnChangedEdgeColorB);
 	SpriteColorR->OnTextCommitted.AddDynamic(this, &UMetaMagicTrailWidget::OnChangedSpriteColorR);
 	SpriteColorG->OnTextCommitted.AddDynamic(this, &UMetaMagicTrailWidget::OnChangedSpriteColorG);
 	SpriteColorB->OnTextCommitted.AddDynamic(this, &UMetaMagicTrailWidget::OnChangedSpriteColorB);
-	
-	MaskShapeComboBox->OnSelectionChanged.AddDynamic(this, &UMetaMagicTrailWidget::OnSelectionChangedMaskShape);
+
+	UseFileCheckBox->OnCheckStateChanged.AddDynamic(this, &UMetaMagicTrailWidget::OnChangedUseFile);
 	
 	ApplyButton->OnClicked.AddDynamic(this, &UMetaMagicTrailWidget::ApplySettings);
 	CloseButton->OnClicked.AddDynamic(this, &UMetaMagicTrailWidget::HideWidget);
+	SelectedFileButton->OnClicked.AddDynamic(this, &UMetaMagicTrailWidget::OnOpenFileButton);
+	ClearFileButton->OnClicked.AddDynamic(this, &UMetaMagicTrailWidget::OnClearFileButton);
 }
 
 void UMetaMagicTrailWidget::NativeDestruct()
 {
 	Super::NativeDestruct();
-
-	InitCreatePoolNum->OnTextCommitted.Clear();
-	RateScale->OnTextCommitted.Clear();
-	LifeTime->OnTextCommitted.Clear();
-	Scale->OnTextCommitted.Clear();
-	EdgeThickness->OnTextCommitted.Clear();
-	EdgeIntensity->OnTextCommitted.Clear();
-	ParticleActivationThresholdSec->OnTextCommitted.Clear();
-	ResetTime->OnTextCommitted.Clear();
+	
 	EdgeColorR->OnTextCommitted.Clear();
 	EdgeColorG->OnTextCommitted.Clear();
 	EdgeColorB->OnTextCommitted.Clear();
@@ -131,6 +124,8 @@ void UMetaMagicTrailWidget::InitVariable()
 	MetaMagicTrailComponent->SpriteColor = MetaMagicTrailSaveGame->MetaMagicTrailData.SpriteColor;
 	MetaMagicTrailComponent->bAutoColor = MetaMagicTrailSaveGame->MetaMagicTrailData.bAutoColor;
 	MetaMagicTrailComponent->bUseMouse = MetaMagicTrailSaveGame->MetaMagicTrailData.bUseMouse;
+	MetaMagicTrailComponent->bUseImageFile = MetaMagicTrailSaveGame->MetaMagicTrailData.bUseFile;
+	MetaMagicTrailComponent->ImagePath.FilePath = MetaMagicTrailSaveGame->MetaMagicTrailData.FilePath;
 
 	InitCreatePoolNum->SetText(FText::FromString(FString::SanitizeFloat(MetaMagicTrailSaveGame->MetaMagicTrailData.InitCreatePoolNum)));
 	RateScale->SetText(FText::FromString(FString::SanitizeFloat(MetaMagicTrailSaveGame->MetaMagicTrailData.RateScale)));
@@ -150,7 +145,14 @@ void UMetaMagicTrailWidget::InitVariable()
 	SpriteColorB->SetText(FText::FromString(FString::FromInt(MetaMagicTrailSaveGame->MetaMagicTrailData.SpriteColor.B)));
 	AutoColorCheckBox->SetIsChecked(MetaMagicTrailSaveGame->MetaMagicTrailData.bAutoColor);
 	UseMouseCheckBox->SetIsChecked(MetaMagicTrailSaveGame->MetaMagicTrailData.bUseMouse);
+	UseFileCheckBox->SetIsChecked(MetaMagicTrailSaveGame->MetaMagicTrailData.bUseFile);
+	SelectedFilePathTextBlock->SetText(FText::FromString(MetaMagicTrailSaveGame->MetaMagicTrailData.FilePath));
 
+	ClearFileButton->SetIsEnabled(MetaMagicTrailSaveGame->MetaMagicTrailData.bUseFile);
+	SelectedFileButton->SetIsEnabled(MetaMagicTrailSaveGame->MetaMagicTrailData.bUseFile);
+	
+	if (!UseFileCheckBox->IsChecked() || SelectedFilePathTextBlock->GetText().IsEmpty()) SelectedFilePathTextBlock->SetText(FText::FromString(FileEmptyString));
+	
 	switch (MetaMagicTrailSaveGame->MetaMagicTrailData.MaskShape)
 	{
 	case EMaskShape::Default:
@@ -199,6 +201,8 @@ void UMetaMagicTrailWidget::ApplySettings()
 	MetaMagicTrailComponent->SpriteColor = FColor(FCString::Atof(*SpriteColorR->GetText().ToString()), FCString::Atof(*SpriteColorG->GetText().ToString()), FCString::Atof(*SpriteColorB->GetText().ToString()));
 	MetaMagicTrailComponent->bAutoColor = AutoColorCheckBox->IsChecked();
 	MetaMagicTrailComponent->bUseMouse = UseMouseCheckBox->IsChecked();
+	MetaMagicTrailComponent->bUseImageFile = UseFileCheckBox->IsChecked();
+	MetaMagicTrailComponent->SetFilePath(SelectedFilePathTextBlock->GetText().ToString());
 	
 	if (MaskShapeComboBox->GetSelectedOption().Equals(TEXT("Default")))
 	{
@@ -227,7 +231,9 @@ void UMetaMagicTrailWidget::ApplySettings()
 	MetaMagicTrailSaveGame->MetaMagicTrailData.SpriteColor = MetaMagicTrailComponent->SpriteColor;
 	MetaMagicTrailSaveGame->MetaMagicTrailData.bAutoColor = MetaMagicTrailComponent->bAutoColor;
 	MetaMagicTrailSaveGame->MetaMagicTrailData.bUseMouse = MetaMagicTrailComponent->bUseMouse;
+	MetaMagicTrailSaveGame->MetaMagicTrailData.bUseFile = MetaMagicTrailComponent->bUseImageFile;
 	MetaMagicTrailSaveGame->MetaMagicTrailData.MaskShape = MetaMagicTrailComponent->MaskShape;
+	MetaMagicTrailSaveGame->MetaMagicTrailData.FilePath = MetaMagicTrailComponent->ImagePath.FilePath;
 	MetaMagicTrailSaveGame->SaveGame();
 }
 
@@ -247,39 +253,6 @@ void UMetaMagicTrailWidget::MetaCursorResizing()
 		const FVector2D NewSize = OriginCursorSize * Ratio;
 		MetaCursorCanvasPanelSlot->SetSize(NewSize);	
 	}
-}
-
-void UMetaMagicTrailWidget::OnChangedInitCreatePoolNum(const FText& Text, ETextCommit::Type CommitMethod)
-{
-	if (FCString::Atoi(*Text.ToString()) < 1) { InitCreatePoolNum->SetText(FText::FromString(TEXT("1"))); }
-}
-
-void UMetaMagicTrailWidget::OnChangedRateScale(const FText& Text, ETextCommit::Type CommitMethod)
-{
-}
-
-void UMetaMagicTrailWidget::OnChangedLifeTime(const FText& Text, ETextCommit::Type CommitMethod)
-{
-}
-
-void UMetaMagicTrailWidget::OnChangedScale(const FText& Text, ETextCommit::Type CommitMethod)
-{
-}
-
-void UMetaMagicTrailWidget::OnChangedEdgeThickness(const FText& Text, ETextCommit::Type CommitMethod)
-{
-}
-
-void UMetaMagicTrailWidget::OnChangedIntensity(const FText& Text, ETextCommit::Type CommitMethod)
-{
-}
-
-void UMetaMagicTrailWidget::OnChangedParicleActivationThresholdSec(const FText& Text, ETextCommit::Type CommitMethod)
-{
-}
-
-void UMetaMagicTrailWidget::OnChangedResetTime(const FText& Text, ETextCommit::Type CommitMethod)
-{
 }
 
 void UMetaMagicTrailWidget::OnChangedEdgeColorR(const FText& Text, ETextCommit::Type CommitMethod)
@@ -318,18 +291,42 @@ void UMetaMagicTrailWidget::OnChangedSpriteColorB(const FText& Text, ETextCommit
 	if (FCString::Atof(*Text.ToString()) < 0) { SpriteColorB->SetText(FText::FromString(TEXT("0"))); }
 }
 
-void UMetaMagicTrailWidget::OnSelectionChangedMaskShape(FString SelectedItem, ESelectInfo::Type SelectionType)
+void UMetaMagicTrailWidget::OnOpenFileButton()
 {
-	if (SelectedItem.Equals(TEXT("Default")))
+#if PLATFORM_WINDOWS
+	OPENFILENAME ofn;
+	TCHAR szFile[260] = { 0 };
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = nullptr;
+	ofn.lpstrFile = szFile;
+	ofn.nMaxFile = sizeof(szFile);
+	ofn.lpstrFilter = TEXT("Image Files (*.jpg;*.jpeg;*.png;*.bmp;*.tga;*.psd;*.exr)\0*.jpg;*.jpeg;*.png;*.bmp;*.tga;*.psd;*.exr\0");
+	ofn.nFilterIndex = 1;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+    
+	// 파일 다이얼로그 열기
+	if (GetOpenFileName(&ofn))
 	{
-		
+		SelectedFilePathTextBlock->SetText(FText::FromString(ofn.lpstrFile));
+		UE_LOG(LogTemp, Log, TEXT("Selected File: %s"), ofn.lpstrFile);	
 	}
-	else if (SelectedItem.Equals(TEXT("Circle")))
+	else
 	{
-		
+		UE_LOG(LogTemp, Warning, TEXT("File selection was canceled or failed."));
 	}
-	else if (SelectedItem.Equals(TEXT("Square")))
-	{
-		
-	}
+#else
+	UE_LOG(LogTemp, Warning, TEXT("The file dialog feature is not implemented on the current platform."));
+#endif
+}
+
+void UMetaMagicTrailWidget::OnClearFileButton()
+{
+	SelectedFilePathTextBlock->SetText(FText::FromString(FileEmptyString));
+}
+
+void UMetaMagicTrailWidget::OnChangedUseFile(bool bIsChecked)
+{
+	ClearFileButton->SetIsEnabled(bIsChecked);
+	SelectedFileButton->SetIsEnabled(bIsChecked);
 }

@@ -78,8 +78,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail|Particle")
 	EMaskShape MaskShape = EMaskShape::Default;
 
-	// Masking texture
+	// Masking texture from file
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail|Particle")
+	bool bUseImageFile = false;
+
+	// Supported jpg/jpeg/png/bmp/tga/psd/exr
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail|Particle", meta=(EditCondition="bUseImageFile == true", EditConditionHides), AssetRegistrySearchable)
+	FFilePath ImagePath;
+	
+	// Masking texture
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail|Particle", meta=(EditCondition="bUseImageFile == false", EditConditionHides))
 	UTexture2D* Texture2D;
 
 	// particle rate scale
@@ -162,6 +170,9 @@ private:
 
 	FTimerHandle MouseDelayHandle;
 
+	UPROPERTY()
+	UTexture2D* TextureFromFile;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -188,6 +199,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="MetaMagicTrail")
 	void ChangeMaskShape(const EMaskShape Shape);
+
+	UFUNCTION(BlueprintCallable, Category="MetaMagicTrail")
+	bool SetFilePath(const FString& NewFilePath);
+
+	UFUNCTION(BlueprintCallable, Category="MetaMagicTrail")
+	void ClearFilePath();
 
 private:
 	void OnViewportResized(FViewport* Viewport, unsigned int I);
