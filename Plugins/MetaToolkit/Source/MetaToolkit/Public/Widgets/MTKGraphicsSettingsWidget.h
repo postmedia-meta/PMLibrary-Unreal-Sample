@@ -74,6 +74,12 @@ private:
 
 	FTimerHandle InitTimerHandle;
 
+	UPROPERTY()
+	EMouseCaptureMode OriginMouseCaptureMode;
+
+	UPROPERTY()
+	EMouseLockMode OriginMouseLockMode;
+	
 	UPROPERTY(VisibleAnywhere, Category="SaveGame")
 	UMTKSaveGame* MTKSaveGame;
 

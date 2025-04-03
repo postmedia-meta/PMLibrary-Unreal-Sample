@@ -4,18 +4,25 @@
 #include "Components//ActorComponent.h"
 #include "MetaMagicTrailComponent.generated.h"
 
+class UMetaMagicTrailWidget;
 class UMemoryPoolObject;
 class ANiagaraActor;
 class UNiagaraSystem;
 class UNiagaraComponent;
+class UUserWidget;
+
+UENUM(Blueprintable)
+enum class EMaskShape : uint8
+{
+	Default,
+	Circle,
+	Square
+};
 
 USTRUCT(Blueprintable)
 struct FLiDARActor
 {
 	GENERATED_BODY()
-
-	UPROPERTY(VisibleAnywhere, Category="LiDARActor")
-	int32 ID;
 
 	UPROPERTY(VisibleAnywhere, Category="LiDARActor")
 	AActor* Actor;
@@ -33,13 +40,43 @@ class METAVFX_API UMetaMagicTrailComponent : public UActorComponent
 	GENERATED_BODY()
 
 	UMetaMagicTrailComponent();
+
+	UPROPERTY()
+	TSubclassOf<ANiagaraActor> MagicTrailNiagaraActorClass;
+
+	UPROPERTY()
+	TSubclassOf<UUserWidget> MagicTrailWidgetClass;
+
+	UPROPERTY()
+	UMetaMagicTrailWidget* MagicTrailWidget;
+
+	UPROPERTY()
+	APlayerController* PlayerController;
+
+	UPROPERTY()
+	UMaterial* DefaultSpriteMaterial;
+
+	UPROPERTY()
+	UMaterial* DefaultTrailMaterial;
+
+	UPROPERTY()
+	UMaterial* CircleTrailMaterial;
+
+	UPROPERTY()
+	UMaterial* SquareTrailMaterial;
+	
+	UPROPERTY()
+	UMaterialInstanceDynamic* SpriteMaterialInstanceDynamic;
+	
+	UPROPERTY()
+	UMaterialInstanceDynamic* TrailMaterialInstanceDynamic;
 	
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="MetaMagicTrail")
 	UMemoryPoolObject* MemoryPoolObject;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="MetaMagicTrail")
-	TSubclassOf<ANiagaraActor> MagicTrailNiagaraActorClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail|Particle")
+	EMaskShape MaskShape = EMaskShape::Default;
 
 	// Masking texture
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail|Particle")
@@ -56,6 +93,12 @@ public:
 	// particle scale
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail|Particle")
 	float Scale = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail|Particle")
+	float SpriteRateScale = 1;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail|Particle")
+	float SpriteScale = 1;
 
 	// The smaller the value, the thicker it becomes.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail|Particle")
@@ -77,6 +120,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail|Particle")
 	bool bAutoColor = true;
 
+	// The number of memory pool objects created when the game starts.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail", meta=(ClampMin=1, UIMin = 1))
+	int32 InitCreatePoolNum = 10;
+
 	// Input is detected and masking(Particle) begins after a delay.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail", meta=(ClampMin=0.1, UIMin = 0.1))
 	float ParticleActivationThresholdSec = 0.1;
@@ -93,27 +140,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail")
 	bool bUseRay = true;
 
+	// If false, change the mouse position directly to the world position without using ray.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail")
+	bool bUseEditUI = true;
+
 private:
 	float CurrentTime = 0;
 
 	bool bIsDragging = false;
 
 	FIntPoint ViewportSize;
-	
-	UPROPERTY(VisibleAnywhere, Category="MetaMagicTrail")
-	UMaterial* SpriteMaterial;
 
-	UPROPERTY(VisibleAnywhere, Category="MetaMagicTrail")
-	UMaterial* TrailMaterial;
-	
-	UPROPERTY(VisibleAnywhere, Category="MetaMagicTrail")
-	UMaterialInstanceDynamic* SpriteMaterialInstanceDynamic;
-	
-	UPROPERTY(VisibleAnywhere, Category="MetaMagicTrail")
-	UMaterialInstanceDynamic* TrailMaterialInstanceDynamic;
-	
 	UPROPERTY()
-	APlayerController* PlayerController;
+	TMap<int32, FLiDARActor> LiDARActors;
 
 	UPROPERTY()
 	AActor* MouseActor;
@@ -123,26 +162,32 @@ private:
 
 	FTimerHandle MouseDelayHandle;
 
-	UPROPERTY()
-	TArray<FLiDARActor> LiDARActors;
-
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="MetaMagicTrail")
 	void NewMagicTrailsWithLiDAR(const TArray<int32> IDs, const TArray<FVector2D> Percentages);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="MetaMagicTrail")
 	void UpdateMagicTrailsWithLiDAR(const TArray<int32> IDs, const TArray<FVector2D> Percentages);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="MetaMagicTrail")
 	void RemoveMagicTrailsWithLiDAR(const TArray<int32> IDs);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="MetaMagicTrail")
 	void DeallocateAllMagicTrails();
+
+	UFUNCTION(BlueprintCallable, Category="MetaMagicTrail")
+	void ShowWidget();
+
+	UFUNCTION(BlueprintCallable, Category="MetaMagicTrail")
+	void HideWidget();
+
+	UFUNCTION(BlueprintCallable, Category="MetaMagicTrail")
+	void ChangeMaskShape(const EMaskShape Shape);
 
 private:
 	void OnViewportResized(FViewport* Viewport, unsigned int I);
@@ -157,8 +202,15 @@ private:
 	void LeftMouseDrag();
 
 	UFUNCTION()
+	void InitNiagaraComponent(UNiagaraComponent* NiagaraComponent);
+
+	UFUNCTION()
 	void SetMouseActorLocation();
 
 	UFUNCTION()
-	void SetActorLocationToScreenPosition(FLiDARActor& Actor, const float X, const float Y);
+	void SetLiDARActorLocationFromScreenPercentage(const int32 ID, const float X, const float Y);
+
+public:
+	UFUNCTION(BlueprintCallable, Category="MetaMagicTrail")
+	bool IsShowWidget();
 };

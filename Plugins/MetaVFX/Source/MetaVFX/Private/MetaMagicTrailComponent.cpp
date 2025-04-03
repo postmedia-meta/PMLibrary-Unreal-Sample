@@ -3,13 +3,21 @@
 #include "MetaMagicTrailComponent.h"
 
 #include "MemoryPoolObject.h"
+#include "MetaMagicTrailWidget.h"
 #include "NiagaraActor.h"
 #include "NiagaraComponent.h"
+#include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 
 UMetaMagicTrailComponent::UMetaMagicTrailComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+
+	static ConstructorHelpers::FClassFinder<UUserWidget> MetaMagicTrailWidgetFinder(TEXT("/Script/UMGEditor.WidgetBlueprint'/MetaVFX/MagicTrail/UI/WBP_MetaMagicTrail.WBP_MetaMagicTrail_C'"));
+	if (MetaMagicTrailWidgetFinder.Succeeded())
+	{
+		MagicTrailWidgetClass = MetaMagicTrailWidgetFinder.Class;
+	}
 
 	static ConstructorHelpers::FClassFinder<ANiagaraActor> MagicTrailNiagaraActorFinder(TEXT("/Script/Engine.Blueprint'/MetaVFX/MagicTrail/VFX/MagicTrail/BP_MagicTrailNiagaraActor.BP_MagicTrailNiagaraActor_C'"));
 	if (MagicTrailNiagaraActorFinder.Succeeded())
@@ -20,13 +28,25 @@ UMetaMagicTrailComponent::UMetaMagicTrailComponent()
 	static ConstructorHelpers::FObjectFinder<UMaterial> SpriteMaterialFinder(TEXT("/Script/Engine.Material'/MetaVFX/MagicTrail/VFX/MagicTrail/Materials/M_Sprite.M_Sprite'"));
 	if (SpriteMaterialFinder.Succeeded())
 	{
-		SpriteMaterial = SpriteMaterialFinder.Object;
+		DefaultSpriteMaterial = SpriteMaterialFinder.Object;
 	}
 
 	static ConstructorHelpers::FObjectFinder<UMaterial> TrailMaterialFinder(TEXT("/Script/Engine.Material'/MetaVFX/MagicTrail/VFX/MagicTrail/Materials/M_Trail.M_Trail'"));
 	if (TrailMaterialFinder.Succeeded())
 	{
-		TrailMaterial = TrailMaterialFinder.Object;
+		DefaultTrailMaterial = TrailMaterialFinder.Object;
+	}
+	
+	static ConstructorHelpers::FObjectFinder<UMaterial> CircleTrailMaterialFinder(TEXT("/Script/Engine.Material'/MetaVFX/MagicTrail/VFX/MagicTrail/Materials/M_Trail_Circle.M_Trail_Circle'"));
+	if (CircleTrailMaterialFinder.Succeeded())
+	{
+		CircleTrailMaterial = CircleTrailMaterialFinder.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UMaterial> SquareTrailMaterialFinder(TEXT("/Script/Engine.Material'/MetaVFX/MagicTrail/VFX/MagicTrail/Materials/M_Trail_Square.M_Trail_Square'"));
+	if (SquareTrailMaterialFinder.Succeeded())
+	{
+		SquareTrailMaterial = SquareTrailMaterialFinder.Object;
 	}
 }
 
@@ -40,14 +60,27 @@ void UMetaMagicTrailComponent::BeginPlay()
 		UE_LOG(LogTemp, Error, TEXT("This component can only be used as a component of a player controller."));
 		return;
 	}
-	SpriteMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(SpriteMaterial, nullptr);
-	TrailMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(TrailMaterial, nullptr);
+
+	if (MagicTrailWidgetClass == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("MagicTrailWidgetClass is nullptr"));
+		return;
+	}
+
+	if (bUseEditUI)
+	{
+		MagicTrailWidget = CreateWidget<UMetaMagicTrailWidget>(PlayerController, MagicTrailWidgetClass);
+		MagicTrailWidget->AddToViewport();
+		MagicTrailWidget->HideWidget();
+	}
+	
+	ChangeMaskShape(MaskShape);
+	SpriteMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(DefaultSpriteMaterial, nullptr);
 	SpriteMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), Texture2D);
-	TrailMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), Texture2D);
 	
 	MemoryPoolObject = NewObject<UMemoryPoolObject>(PlayerController, TEXT("Memory Pool"));
 	MemoryPoolObject->SetActorClass(MagicTrailNiagaraActorClass);
-	MemoryPoolObject->CreateActors(10);
+	MemoryPoolObject->CreateActors(InitCreatePoolNum);
 
 	if (bUseMouse)
 	{
@@ -64,6 +97,12 @@ void UMetaMagicTrailComponent::BeginPlay()
 	if (ViewportSize.X <= 0|| ViewportSize.Y <= 0)
 	{
 		PlayerController->GetViewportSize(ViewportSize.X, ViewportSize.Y);
+
+		if (MagicTrailWidget)
+		{
+			MagicTrailWidget->SetSizeBoxSize(ViewportSize.X, ViewportSize.Y);
+			MagicTrailWidget->MetaCursorResizing();
+		}
 	}
 }
 
@@ -75,6 +114,15 @@ void UMetaMagicTrailComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		GetWorld()->GetTimerManager().ClearTimer(MouseDelayHandle);
 		MouseDelayHandle.Invalidate();
+	}
+
+	for (auto& LiDARActor : LiDARActors)
+	{
+		if (LiDARActor.Value.DelayHandle.IsValid())
+		{
+			GetWorld()->GetTimerManager().ClearTimer(LiDARActor.Value.DelayHandle);
+			LiDARActor.Value.DelayHandle.Invalidate();
+		}
 	}
 
 	FViewport::ViewportResizedEvent.Clear();
@@ -101,9 +149,9 @@ void UMetaMagicTrailComponent::NewMagicTrailsWithLiDAR(const TArray<int32> IDs, 
 	for (int32 i = 0; i < IDs.Num(); ++i)
 	{
 		bool IsExist = false;
-		for (int32 j = 0; j < LiDARActors.Num(); ++j)
+		for (auto& LiDARActor : LiDARActors)
 		{
-			if (LiDARActors[j].ID == IDs[i])
+			if (LiDARActor.Key == IDs[i])
 			{
 				IsExist = true;
 				break;
@@ -113,21 +161,12 @@ void UMetaMagicTrailComponent::NewMagicTrailsWithLiDAR(const TArray<int32> IDs, 
 		if (!IsExist)
 		{
 			FLiDARActor LiDARActor;
-			LiDARActor.ID = IDs[i];
 			LiDARActor.Actor = MemoryPoolObject->AllocateActor().Actor;
 			LiDARActor.NiagaraComponent = Cast<ANiagaraActor>(LiDARActor.Actor)->GetNiagaraComponent();
-			LiDARActor.NiagaraComponent->SetVariableMaterial(TEXT("MI_Sprite"), SpriteMaterialInstanceDynamic);
-			LiDARActor.NiagaraComponent->SetVariableMaterial(TEXT("MI_Trail"), TrailMaterialInstanceDynamic);
-			LiDARActor.NiagaraComponent->SetVariableFloat(TEXT("LifeTime"), LifeTime);
-			LiDARActor.NiagaraComponent->SetVariableFloat(TEXT("Scale"), Scale);
-			LiDARActor.NiagaraComponent->SetVariableFloat(TEXT("EdgeThickness"), EdgeThickness);
-			LiDARActor.NiagaraComponent->SetVariableFloat(TEXT("EdgeIntensity"), EdgeIntensity);
-			LiDARActor.NiagaraComponent->SetVariableLinearColor(TEXT("EdgeColor"), EdgeColor);
-			LiDARActor.NiagaraComponent->SetVariableLinearColor(TEXT("SpriteColor"), SpriteColor);
-			LiDARActor.NiagaraComponent->SetVariableBool(TEXT("bAutoColor"), bAutoColor);
+			InitNiagaraComponent(LiDARActor.NiagaraComponent);
 
-			LiDARActors.Emplace(LiDARActor);
-			SetActorLocationToScreenPosition(LiDARActor, Percentages[i].X, Percentages[i].Y);	
+			LiDARActors.Emplace(IDs[i], LiDARActor);
+			SetLiDARActorLocationFromScreenPercentage(IDs[i], Percentages[i].X, Percentages[i].Y);
 		}
 	}
 }
@@ -139,12 +178,12 @@ void UMetaMagicTrailComponent::UpdateMagicTrailsWithLiDAR(const TArray<int32> ID
 	for (int32 i = 0; i < IDs.Num(); ++i)
 	{
 		bool IsExist = false;
-		for (int32 j = 0; j < LiDARActors.Num(); ++j)
+		for (auto& LiDARActor : LiDARActors)
 		{
-			if (LiDARActors[j].ID == IDs[i])
+			if (LiDARActor.Key == IDs[i])
 			{
 				IsExist = true;
-				SetActorLocationToScreenPosition(LiDARActors[j], Percentages[i].X, Percentages[i].Y);	
+				SetLiDARActorLocationFromScreenPercentage(LiDARActor.Key, Percentages[i].X, Percentages[i].Y);
 				break;
 			}
 		}
@@ -152,57 +191,39 @@ void UMetaMagicTrailComponent::UpdateMagicTrailsWithLiDAR(const TArray<int32> ID
 		if (!IsExist)
 		{
 			FLiDARActor LiDARActor;
-			LiDARActor.ID = IDs[i];
 			LiDARActor.Actor = MemoryPoolObject->AllocateActor().Actor;
 			LiDARActor.NiagaraComponent = Cast<ANiagaraActor>(LiDARActor.Actor)->GetNiagaraComponent();
-			LiDARActor.NiagaraComponent->SetVariableMaterial(TEXT("MI_Sprite"), SpriteMaterialInstanceDynamic);
-			LiDARActor.NiagaraComponent->SetVariableMaterial(TEXT("MI_Trail"), TrailMaterialInstanceDynamic);
-			LiDARActor.NiagaraComponent->SetVariableFloat(TEXT("LifeTime"), LifeTime);
-			LiDARActor.NiagaraComponent->SetVariableFloat(TEXT("Scale"), Scale);
-			LiDARActor.NiagaraComponent->SetVariableFloat(TEXT("EdgeThickness"), EdgeThickness);
-			LiDARActor.NiagaraComponent->SetVariableFloat(TEXT("EdgeIntensity"), EdgeIntensity);
-			LiDARActor.NiagaraComponent->SetVariableLinearColor(TEXT("EdgeColor"), EdgeColor);
-			LiDARActor.NiagaraComponent->SetVariableLinearColor(TEXT("SpriteColor"), SpriteColor);
-			LiDARActor.NiagaraComponent->SetVariableBool(TEXT("bAutoColor"), bAutoColor);
+			InitNiagaraComponent(LiDARActor.NiagaraComponent);
 
-			LiDARActors.Emplace(LiDARActor);
-			SetActorLocationToScreenPosition(LiDARActor, Percentages[i].X, Percentages[i].Y);	
+			LiDARActors.Emplace(IDs[i],LiDARActor);
+			SetLiDARActorLocationFromScreenPercentage(IDs[i], Percentages[i].X, Percentages[i].Y);	
 		}
 	}
 }
 
 void UMetaMagicTrailComponent::RemoveMagicTrailsWithLiDAR(const TArray<int32> IDs)
 {
-	TArray<int32> RemoveItems;
-	RemoveItems.Empty();
-	
 	for (int32 i = 0; i < IDs.Num(); ++i)
 	{
-		for (int32 j = 0; j < LiDARActors.Num(); ++j)
+		for (auto& LiDARActor : LiDARActors)
 		{
-			if (LiDARActors[j].ID == IDs[i])
+			if (LiDARActor.Key == IDs[i])
 			{
-				RemoveItems.Emplace(j);
-				
-				FLiDARActor& LiDARActor = LiDARActors[j];
-				if (LiDARActor.DelayHandle.IsValid())
+				if (LiDARActor.Value.DelayHandle.IsValid())
 				{
-					GetWorld()->GetTimerManager().ClearTimer(LiDARActor.DelayHandle);
-					LiDARActor.DelayHandle.Invalidate();
+					GetWorld()->GetTimerManager().ClearTimer(LiDARActor.Value.DelayHandle);
+					LiDARActor.Value.DelayHandle.Invalidate();
 				}
 		
-				LiDARActor.NiagaraComponent->SetVariableFloat(TEXT("RateScale"), 0);
-				MemoryPoolObject->DeallocateActor(LiDARActor.Actor, false);
+				LiDARActor.Value.NiagaraComponent->SetVariableFloat(TEXT("RateScale"), 0);
+				MemoryPoolObject->DeallocateActor(LiDARActor.Value.Actor, false);
 
-				LiDARActor.Actor = nullptr;
-				LiDARActor.NiagaraComponent = nullptr;
+				LiDARActor.Value.Actor = nullptr;
+				LiDARActor.Value.NiagaraComponent = nullptr;
+
+				LiDARActors.Remove(IDs[i]);
 			}
 		}
-	}
-
-	for (const int32 RemoveItem : RemoveItems)
-	{
-		LiDARActors.RemoveAt(RemoveItem);
 	}
 }
 
@@ -223,27 +244,69 @@ void UMetaMagicTrailComponent::DeallocateAllMagicTrails()
 		MouseNiagaraComponent = nullptr;
 	}
 
-	for (FLiDARActor& LiDARActor : LiDARActors)
+	for (auto& LiDARActor : LiDARActors)
 	{
-		if (LiDARActor.DelayHandle.IsValid())
+		if (LiDARActor.Value.DelayHandle.IsValid())
 		{
-			GetWorld()->GetTimerManager().ClearTimer(LiDARActor.DelayHandle);
-			LiDARActor.DelayHandle.Invalidate();
+			GetWorld()->GetTimerManager().ClearTimer(LiDARActor.Value.DelayHandle);
+			LiDARActor.Value.DelayHandle.Invalidate();
 		}
 		
-		LiDARActor.NiagaraComponent->SetVariableFloat(TEXT("RateScale"), 0);
-		MemoryPoolObject->DeallocateActor(LiDARActor.Actor, false);
+		LiDARActor.Value.NiagaraComponent->SetVariableFloat(TEXT("RateScale"), 0);
+		MemoryPoolObject->DeallocateActor(LiDARActor.Value.Actor, false);
 
-		LiDARActor.Actor = nullptr;
-		LiDARActor.NiagaraComponent = nullptr;
+		LiDARActor.Value.Actor = nullptr;
+		LiDARActor.Value.NiagaraComponent = nullptr;
 	}
 	
 	LiDARActors.Empty();
 }
 
+void UMetaMagicTrailComponent::ShowWidget()
+{
+	if (MagicTrailWidget)
+	{
+		MagicTrailWidget->ShowWidget();
+	}
+}
+
+void UMetaMagicTrailComponent::HideWidget()
+{
+	if (MagicTrailWidget)
+	{
+		MagicTrailWidget->HideWidget();
+	}
+}
+
+void UMetaMagicTrailComponent::ChangeMaskShape(const EMaskShape Shape)
+{
+	if (TrailMaterialInstanceDynamic && MaskShape == Shape) return;
+
+	MaskShape = Shape;
+	switch (MaskShape)
+	{
+	case EMaskShape::Default:
+		TrailMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(DefaultTrailMaterial, nullptr);
+		break;
+	case EMaskShape::Circle:
+		TrailMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(CircleTrailMaterial, nullptr);
+		break;
+	case EMaskShape::Square:
+		TrailMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(SquareTrailMaterial, nullptr);
+		break;
+	}
+	TrailMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), Texture2D);
+}
+
 void UMetaMagicTrailComponent::OnViewportResized(FViewport* Viewport, unsigned int I)
 {
 	ViewportSize = Viewport->GetSizeXY();
+
+	if (MagicTrailWidget)
+	{
+		MagicTrailWidget->SetSizeBoxSize(ViewportSize.X, ViewportSize.Y);
+		MagicTrailWidget->MetaCursorResizing();
+	}
 }
 
 void UMetaMagicTrailComponent::OnLeftMouseDown()
@@ -253,15 +316,7 @@ void UMetaMagicTrailComponent::OnLeftMouseDown()
 	{
 		MouseActor = MemoryPoolObject->AllocateActor().Actor;
 		MouseNiagaraComponent = Cast<ANiagaraActor>(MouseActor)->GetNiagaraComponent();
-		MouseNiagaraComponent->SetVariableMaterial(TEXT("MI_Sprite"), SpriteMaterialInstanceDynamic);
-		MouseNiagaraComponent->SetVariableMaterial(TEXT("MI_Trail"), TrailMaterialInstanceDynamic);
-		MouseNiagaraComponent->SetVariableFloat(TEXT("LifeTime"), LifeTime);
-		MouseNiagaraComponent->SetVariableFloat(TEXT("Scale"), Scale);
-		MouseNiagaraComponent->SetVariableFloat(TEXT("EdgeThickness"), EdgeThickness);
-		MouseNiagaraComponent->SetVariableFloat(TEXT("EdgeIntensity"), EdgeIntensity);
-		MouseNiagaraComponent->SetVariableLinearColor(TEXT("EdgeColor"), EdgeColor);
-		MouseNiagaraComponent->SetVariableLinearColor(TEXT("SpriteColor"), SpriteColor);
-		MouseNiagaraComponent->SetVariableBool(TEXT("bAutoColor"), bAutoColor);
+		InitNiagaraComponent(MouseNiagaraComponent);
 
 		SetMouseActorLocation();
 	}
@@ -292,18 +347,25 @@ void UMetaMagicTrailComponent::LeftMouseDrag()
 	{
 		MouseActor = MemoryPoolObject->AllocateActor().Actor;
 		MouseNiagaraComponent = Cast<ANiagaraActor>(MouseActor)->GetNiagaraComponent();
-		MouseNiagaraComponent->SetVariableMaterial(TEXT("MI_Sprite"), SpriteMaterialInstanceDynamic);
-		MouseNiagaraComponent->SetVariableMaterial(TEXT("MI_Trail"), TrailMaterialInstanceDynamic);
-		MouseNiagaraComponent->SetVariableFloat(TEXT("LifeTime"), LifeTime);
-		MouseNiagaraComponent->SetVariableFloat(TEXT("Scale"), Scale);
-		MouseNiagaraComponent->SetVariableFloat(TEXT("EdgeThickness"), EdgeThickness);
-		MouseNiagaraComponent->SetVariableFloat(TEXT("EdgeIntensity"), EdgeIntensity);
-		MouseNiagaraComponent->SetVariableLinearColor(TEXT("EdgeColor"), EdgeColor);
-		MouseNiagaraComponent->SetVariableLinearColor(TEXT("SpriteColor"), SpriteColor);
-		MouseNiagaraComponent->SetVariableBool(TEXT("bAutoColor"), bAutoColor);
+		InitNiagaraComponent(MouseNiagaraComponent);
 	}
 	
 	SetMouseActorLocation();
+}
+
+void UMetaMagicTrailComponent::InitNiagaraComponent(UNiagaraComponent* NiagaraComponent)
+{
+	NiagaraComponent->SetVariableMaterial(TEXT("MI_Sprite"), SpriteMaterialInstanceDynamic);
+	NiagaraComponent->SetVariableMaterial(TEXT("MI_Trail"), TrailMaterialInstanceDynamic);
+	NiagaraComponent->SetVariableFloat(TEXT("LifeTime"), LifeTime);
+	NiagaraComponent->SetVariableFloat(TEXT("Scale"), Scale);
+	NiagaraComponent->SetVariableFloat(TEXT("SpriteScale"), SpriteScale);
+	NiagaraComponent->SetVariableFloat(TEXT("SpriteRateScale"), SpriteRateScale);
+	NiagaraComponent->SetVariableFloat(TEXT("EdgeThickness"), EdgeThickness);
+	NiagaraComponent->SetVariableFloat(TEXT("EdgeIntensity"), EdgeIntensity);
+	NiagaraComponent->SetVariableLinearColor(TEXT("EdgeColor"), EdgeColor);
+	NiagaraComponent->SetVariableLinearColor(TEXT("SpriteColor"), SpriteColor);
+	NiagaraComponent->SetVariableBool(TEXT("bAutoColor"), bAutoColor);
 }
 
 void UMetaMagicTrailComponent::SetMouseActorLocation()
@@ -319,7 +381,7 @@ void UMetaMagicTrailComponent::SetMouseActorLocation()
 				GetWorld()->GetTimerManager().SetTimer(MouseDelayHandle, FTimerDelegate::CreateLambda([this]()->void
 				{
 					MouseNiagaraComponent->SetVariableFloat(TEXT("RateScale"), RateScale);
-				}), 0.1, false);		
+				}), ParticleActivationThresholdSec, false);		
 			}
 		}
 		else
@@ -345,55 +407,72 @@ void UMetaMagicTrailComponent::SetMouseActorLocation()
 				GetWorld()->GetTimerManager().SetTimer(MouseDelayHandle, FTimerDelegate::CreateLambda([this]()->void
 				{
 					MouseNiagaraComponent->SetVariableFloat(TEXT("RateScale"), RateScale);
-				}), 0.1, false);		
+				}), ParticleActivationThresholdSec, false);		
 			}
 		}
 	}
 }
 
-void UMetaMagicTrailComponent::SetActorLocationToScreenPosition(FLiDARActor& LiDARActor, const float X, const float Y)
+void UMetaMagicTrailComponent::SetLiDARActorLocationFromScreenPercentage(const int32 ID, const float X, const float Y)
 {
+	FLiDARActor* LiDARActor = LiDARActors.Find(ID);
 	const FVector2D ScreenPosition = FVector2D(ViewportSize.X * X, ViewportSize.Y * Y);
-	
-	if (bUseRay)
+
+	if(LiDARActor)
 	{
-		FHitResult HitResult;
-		if (PlayerController->GetHitResultAtScreenPosition(ScreenPosition, ECC_Visibility, false, HitResult))
+		if (bUseRay)
 		{
-			LiDARActor.Actor->SetActorLocation(HitResult.Location);
-			if (!LiDARActor.DelayHandle.IsValid())
+			FHitResult HitResult;
+			if (PlayerController->GetHitResultAtScreenPosition(ScreenPosition, ECC_Visibility, false, HitResult))
 			{
-				GetWorld()->GetTimerManager().SetTimer(LiDARActor.DelayHandle, FTimerDelegate::CreateLambda([this, LiDARActor]()->void
+				LiDARActor->Actor->SetActorLocation(HitResult.Location);
+				if (!LiDARActor->DelayHandle.IsValid())
 				{
-					LiDARActor.NiagaraComponent->SetVariableFloat(TEXT("RateScale"), RateScale);
-				}), 0.1, false);		
+					GetWorld()->GetTimerManager().SetTimer(LiDARActor->DelayHandle, FTimerDelegate::CreateLambda([this, ID]()->void
+					{
+						if (const FLiDARActor* LiDARActor = LiDARActors.Find(ID))
+						{
+							LiDARActor->NiagaraComponent->SetVariableFloat(TEXT("RateScale"), RateScale);
+						}
+					}), ParticleActivationThresholdSec, false);		
+				}
+			}
+			else
+			{
+				if (LiDARActor->DelayHandle.IsValid())
+				{
+					GetWorld()->GetTimerManager().ClearTimer(LiDARActor->DelayHandle);
+					LiDARActor->DelayHandle.Invalidate();
+
+					LiDARActor->NiagaraComponent->SetVariableFloat(TEXT("RateScale"), 0);
+				}
 			}
 		}
 		else
 		{
-			if (LiDARActor.DelayHandle.IsValid())
+			FVector WorldPos = FVector::Zero();
+			FVector WorldDir = FVector::Zero();
+			if (UGameplayStatics::DeprojectScreenToWorld(PlayerController, ScreenPosition, WorldPos, WorldDir))
 			{
-				GetWorld()->GetTimerManager().ClearTimer(LiDARActor.DelayHandle);
-				LiDARActor.DelayHandle.Invalidate();
-
-				LiDARActor.NiagaraComponent->SetVariableFloat(TEXT("RateScale"), 0);
-			}
-		}
-	}
-	else
-	{
-		FVector WorldPos = FVector::Zero();
-		FVector WorldDir = FVector::Zero();
-		if (UGameplayStatics::DeprojectScreenToWorld(PlayerController, ScreenPosition, WorldPos, WorldDir))
-		{
-			LiDARActor.Actor->SetActorLocation(WorldPos);
-			if (!LiDARActor.DelayHandle.IsValid())
-			{
-				GetWorld()->GetTimerManager().SetTimer(LiDARActor.DelayHandle, FTimerDelegate::CreateLambda([this, LiDARActor]()->void
+				LiDARActor->Actor->SetActorLocation(WorldPos);
+				if (!LiDARActor->DelayHandle.IsValid())
 				{
-					LiDARActor.NiagaraComponent->SetVariableFloat(TEXT("RateScale"), RateScale);
-				}), 0.1, false);		
+					GetWorld()->GetTimerManager().SetTimer(LiDARActor->DelayHandle, FTimerDelegate::CreateLambda([this, ID]()->void
+					{
+						if (const FLiDARActor* LiDARActor = LiDARActors.Find(ID))
+						{
+							LiDARActor->NiagaraComponent->SetVariableFloat(TEXT("RateScale"), RateScale);
+						}
+					}), ParticleActivationThresholdSec, false);		
+				}
 			}
-		}
+		}	
 	}
+}
+
+bool UMetaMagicTrailComponent::IsShowWidget()
+{
+	if (MagicTrailWidget == nullptr) return false;
+
+	return MagicTrailWidget->GetVisibility() == ESlateVisibility::SelfHitTestInvisible;
 }

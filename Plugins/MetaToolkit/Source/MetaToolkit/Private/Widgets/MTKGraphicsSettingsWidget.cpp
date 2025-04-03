@@ -11,6 +11,7 @@
 #include "Components/TextBlock.h"
 #include "GameFramework/GameUserSettings.h"
 #include "TimerManager.h"
+#include "Camera/CameraActor.h"
 
 void UMTKGraphicsSettingsWidget::NativeConstruct()
 {
@@ -66,6 +67,8 @@ void UMTKGraphicsSettingsWidget::Setup()
 	if (ViewportSize.X > 0 && ViewportSize.Y > 0)
 	{
 		ViewportSizeTextBlock->SetText(FText::FromString(FString::Printf(TEXT("%dx%d"), ViewportSize.X, ViewportSize.Y)));
+		OriginMouseCaptureMode = GetWorld()->GetGameViewport()->GetMouseCaptureMode();
+		OriginMouseLockMode = GetWorld()->GetGameViewport()->GetMouseLockMode();
 		
 		InitVariable();
 		ApplySettings();
@@ -143,7 +146,12 @@ void UMTKGraphicsSettingsWidget::ShowWidget()
 
 void UMTKGraphicsSettingsWidget::HideWidget()
 {
-	PlayerController->SetInputMode(FInputModeGameOnly());
+	if (ViewportSize.X > 0 && ViewportSize.Y > 0)
+	{
+		PlayerController->SetInputMode(FInputModeGameOnly());
+		GetWorld()->GetGameViewport()->SetMouseCaptureMode(OriginMouseCaptureMode);
+		GetWorld()->GetGameViewport()->SetMouseLockMode(OriginMouseLockMode);	
+	}
 	SetVisibility(ESlateVisibility::Collapsed);
 }
 

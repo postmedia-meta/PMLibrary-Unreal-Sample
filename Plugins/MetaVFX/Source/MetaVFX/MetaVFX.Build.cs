@@ -40,6 +40,7 @@ public class MetaVFX : ModuleRules
 				"SlateCore",
 				"Niagara",
 				"InputCore",
+				"UMG",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
