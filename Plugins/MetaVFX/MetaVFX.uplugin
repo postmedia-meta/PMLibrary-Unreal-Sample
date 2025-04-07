@@ -4,7 +4,7 @@
 	"VersionName": "1.0",
 	"FriendlyName": "MetaVFX",
 	"Description": "",
-	"Category": "Other",
+	"Category": "Meta",
 	"CreatedBy": "PoSTMEDIA",
 	"CreatedByURL": "",
 	"DocsURL": "",
@@ -20,5 +20,11 @@
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
 		}
-	]
+	],
+	"Plugins": [
+		{
+			"Name": "NiagaraFluids",
+			"Enabled": true
+		}
+	]	
 }

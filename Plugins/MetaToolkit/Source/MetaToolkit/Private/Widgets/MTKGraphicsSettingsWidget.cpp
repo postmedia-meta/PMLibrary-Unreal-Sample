@@ -140,6 +140,7 @@ void UMTKGraphicsSettingsWidget::ChangeOverallQuality(const int32 Quality)
 void UMTKGraphicsSettingsWidget::ShowWidget()
 {
 	InitVariable();
+	PrevHideCursorDuringCapture = GetWorld()->GetGameViewport()->HideCursorDuringCapture();
 	PlayerController->SetInputMode(FInputModeGameAndUI());
 	SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 }
@@ -149,6 +150,7 @@ void UMTKGraphicsSettingsWidget::HideWidget()
 	if (ViewportSize.X > 0 && ViewportSize.Y > 0)
 	{
 		PlayerController->SetInputMode(FInputModeGameOnly());
+		GetWorld()->GetGameViewport()->SetHideCursorDuringCapture(PrevHideCursorDuringCapture);
 		GetWorld()->GetGameViewport()->SetMouseCaptureMode(OriginMouseCaptureMode);
 		GetWorld()->GetGameViewport()->SetMouseLockMode(OriginMouseLockMode);	
 	}

@@ -75,6 +75,9 @@ private:
 	FTimerHandle InitTimerHandle;
 
 	UPROPERTY()
+	bool PrevHideCursorDuringCapture;
+
+	UPROPERTY()
 	EMouseCaptureMode OriginMouseCaptureMode;
 
 	UPROPERTY()
