@@ -99,13 +99,13 @@ public:
 	bool IsShowWidget() const;
 
 	UFUNCTION(BlueprintCallable, Category="MetaMagicTrail")
-	void NewCollidersWithLiDAR(const int32 ID, const FVector2D Percentage);
+	void NewColliderWithLiDAR(const int32 ID, const FVector2D Percentage);
 
 	UFUNCTION(BlueprintCallable, Category="MetaMagicTrail")
-	void UpdateCollidersWithLiDAR(const int32 ID, const FVector2D Percentage);
+	void UpdateColliderWithLiDAR(const int32 ID, const FVector2D Percentage);
 
 	UFUNCTION(BlueprintCallable, Category="MetaMagicTrail")
-	void RemoveCollidersWithLiDAR(const int32 ID);
+	void RemoveColliderWithLiDAR(const int32 ID);
 
 private:
 	void OnViewportResized(FViewport* Viewport, unsigned int I);

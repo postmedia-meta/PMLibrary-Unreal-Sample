@@ -118,19 +118,19 @@ bool UMetaFluidArtManager::IsShowWidget() const
 	return FluidArtWidget->GetVisibility() == ESlateVisibility::SelfHitTestInvisible;
 }
 
-void UMetaFluidArtManager::NewCollidersWithLiDAR(const int32 ID, const FVector2D Percentage)
+void UMetaFluidArtManager::NewColliderWithLiDAR(const int32 ID, const FVector2D Percentage)
 {
 	const FVector2D ScreenPosition = FVector2D(ViewportSize.X * Percentage.X, ViewportSize.Y * Percentage.Y);
 	SetColliderLocation(ID, ScreenPosition);
 }
 
-void UMetaFluidArtManager::UpdateCollidersWithLiDAR(const int32 ID, const FVector2D Percentage)
+void UMetaFluidArtManager::UpdateColliderWithLiDAR(const int32 ID, const FVector2D Percentage)
 {
 	const FVector2D ScreenPosition = FVector2D(ViewportSize.X * Percentage.X, ViewportSize.Y * Percentage.Y);
 	SetColliderLocation(ID, ScreenPosition);
 }
 
-void UMetaFluidArtManager::RemoveCollidersWithLiDAR(const int32 ID)
+void UMetaFluidArtManager::RemoveColliderWithLiDAR(const int32 ID)
 {
 	if (AllocatedColliders.Contains(ID))
 	{

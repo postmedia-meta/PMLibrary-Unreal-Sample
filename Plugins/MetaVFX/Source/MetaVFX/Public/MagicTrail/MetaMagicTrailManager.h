@@ -180,13 +180,13 @@ protected:
 
 public:
 	UFUNCTION(BlueprintCallable, Category="MetaMagicTrail")
-	void NewMagicTrailsWithLiDAR(const TArray<int32> IDs, const TArray<FVector2D> Percentages);
+	void NewMagicTrailWithLiDAR(const int32 ID, const FVector2D Percentage);
 
 	UFUNCTION(BlueprintCallable, Category="MetaMagicTrail")
-	void UpdateMagicTrailsWithLiDAR(const TArray<int32> IDs, const TArray<FVector2D> Percentages);
+	void UpdateMagicTrailWithLiDAR(const int32 ID, const FVector2D Percentage);
 
 	UFUNCTION(BlueprintCallable, Category="MetaMagicTrail")
-	void RemoveMagicTrailsWithLiDAR(const TArray<int32> IDs);
+	void RemoveMagicTrailWithLiDAR(const int32 ID);
 
 	UFUNCTION(BlueprintCallable, Category="MetaMagicTrail")
 	void DeallocateAllMagicTrails();

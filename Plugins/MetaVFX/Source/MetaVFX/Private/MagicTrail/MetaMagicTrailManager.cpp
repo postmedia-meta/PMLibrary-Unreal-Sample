@@ -144,90 +144,53 @@ void UMetaMagicTrailManager::TickComponent(float DeltaTime, ELevelTick TickType,
 	if (bIsDragging) LeftMouseDrag();
 }
 
-void UMetaMagicTrailManager::NewMagicTrailsWithLiDAR(const TArray<int32> IDs, const TArray<FVector2D> Percentages)
+void UMetaMagicTrailManager::NewMagicTrailWithLiDAR(const int32 ID, const FVector2D Percentage)
 {
-	if (IDs.Num() != Percentages.Num()) return;
-	
-	for (int32 i = 0; i < IDs.Num(); ++i)
+	if (!LiDARActors.Contains(ID))
 	{
-		bool IsExist = false;
-		for (auto& LiDARActor : LiDARActors)
-		{
-			if (LiDARActor.Key == IDs[i])
-			{
-				IsExist = true;
-				SetLiDARActorLocationFromScreenPercentage(LiDARActor.Key, Percentages[i].X, Percentages[i].Y);
-				break;
-			}
-		}	
-		
-		if (!IsExist)
-		{
-			FLiDARActor LiDARActor;
-			LiDARActor.Actor = MemoryPoolObject->AllocateActor().Actor;
-			LiDARActor.NiagaraComponent = Cast<ANiagaraActor>(LiDARActor.Actor)->GetNiagaraComponent();
-			InitNiagaraComponent(LiDARActor.NiagaraComponent);
+		FLiDARActor LiDARActor;
+		LiDARActor.Actor = MemoryPoolObject->AllocateActor().Actor;
+		LiDARActor.NiagaraComponent = Cast<ANiagaraActor>(LiDARActor.Actor)->GetNiagaraComponent();
+		InitNiagaraComponent(LiDARActor.NiagaraComponent);
 
-			LiDARActors.Emplace(IDs[i], LiDARActor);
-			SetLiDARActorLocationFromScreenPercentage(IDs[i], Percentages[i].X, Percentages[i].Y);
-		}
+		LiDARActors.Emplace(ID, LiDARActor);
 	}
+	
+	SetLiDARActorLocationFromScreenPercentage(ID, Percentage.X, Percentage.Y);
 }
 
-void UMetaMagicTrailManager::UpdateMagicTrailsWithLiDAR(const TArray<int32> IDs, const TArray<FVector2D> Percentages)
+void UMetaMagicTrailManager::UpdateMagicTrailWithLiDAR(const int32 ID, const FVector2D Percentage)
 {
-	if (IDs.Num() != Percentages.Num()) return;
-	
-	for (int32 i = 0; i < IDs.Num(); ++i)
+	if (!LiDARActors.Contains(ID))
 	{
-		bool IsExist = false;
-		for (auto& LiDARActor : LiDARActors)
-		{
-			if (LiDARActor.Key == IDs[i])
-			{
-				IsExist = true;
-				SetLiDARActorLocationFromScreenPercentage(LiDARActor.Key, Percentages[i].X, Percentages[i].Y);
-				break;
-			}
-		}	
-		
-		if (!IsExist)
-		{
-			FLiDARActor LiDARActor;
-			LiDARActor.Actor = MemoryPoolObject->AllocateActor().Actor;
-			LiDARActor.NiagaraComponent = Cast<ANiagaraActor>(LiDARActor.Actor)->GetNiagaraComponent();
-			InitNiagaraComponent(LiDARActor.NiagaraComponent);
+		FLiDARActor LiDARActor;
+		LiDARActor.Actor = MemoryPoolObject->AllocateActor().Actor;
+		LiDARActor.NiagaraComponent = Cast<ANiagaraActor>(LiDARActor.Actor)->GetNiagaraComponent();
+		InitNiagaraComponent(LiDARActor.NiagaraComponent);
 
-			LiDARActors.Emplace(IDs[i],LiDARActor);
-			SetLiDARActorLocationFromScreenPercentage(IDs[i], Percentages[i].X, Percentages[i].Y);	
-		}
+		LiDARActors.Emplace(ID, LiDARActor);
 	}
+	
+	SetLiDARActorLocationFromScreenPercentage(ID, Percentage.X, Percentage.Y);
 }
 
-void UMetaMagicTrailManager::RemoveMagicTrailsWithLiDAR(const TArray<int32> IDs)
+void UMetaMagicTrailManager::RemoveMagicTrailWithLiDAR(const int32 ID)
 {
-	for (int32 i = 0; i < IDs.Num(); ++i)
+	if (LiDARActors.Contains(ID))
 	{
-		for (auto& LiDARActor : LiDARActors)
+		if (LiDARActors[ID].DelayHandle.IsValid())
 		{
-			if (LiDARActor.Key == IDs[i])
-			{
-				if (LiDARActor.Value.DelayHandle.IsValid())
-				{
-					GetWorld()->GetTimerManager().ClearTimer(LiDARActor.Value.DelayHandle);
-					LiDARActor.Value.DelayHandle.Invalidate();
-				}
-		
-				LiDARActor.Value.NiagaraComponent->SetVariableFloat(TEXT("RateScale"), 0);
-				MemoryPoolObject->DeallocateActor(LiDARActor.Value.Actor, false);
-
-				LiDARActor.Value.Actor = nullptr;
-				LiDARActor.Value.NiagaraComponent = nullptr;
-
-				LiDARActors.Remove(IDs[i]);
-				break;
-			}
+			GetWorld()->GetTimerManager().ClearTimer(LiDARActors[ID].DelayHandle);
+			LiDARActors[ID].DelayHandle.Invalidate();
 		}
+		
+		LiDARActors[ID].NiagaraComponent->SetVariableFloat(TEXT("RateScale"), 0);
+		MemoryPoolObject->DeallocateActor(LiDARActors[ID].Actor, false);
+
+		LiDARActors[ID].Actor = nullptr;
+		LiDARActors[ID].NiagaraComponent = nullptr;
+
+		LiDARActors.Remove(ID);
 	}
 }
 
