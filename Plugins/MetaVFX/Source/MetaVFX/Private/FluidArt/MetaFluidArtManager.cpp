@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "FluidArt/MetaFluidArtManager.h"
 
 #include "MemoryPoolObject.h"
@@ -134,10 +131,12 @@ void UMetaFluidArtManager::RemoveColliderWithLiDAR(const int32 ID)
 {
 	if (AllocatedColliders.Contains(ID))
 	{
+		const float DecreaseStartTime = (1 - AllocatedColliders[ID].Actor->GetActorScale3D().X / InteractionScale) * ScaleDecreaseTime;
 		const int32 DeallocID = GetNonDuplicatedDeallocateID();
 		FluidCollidersToBeDeallocated.Emplace(DeallocID, AllocatedColliders[ID]);
 		AllocatedColliders.Remove(ID);
-		ColliderDecreaseScale(DeallocID);
+		
+		ColliderDecreaseScale(DeallocID, DecreaseStartTime);
 	}
 }
 
@@ -163,10 +162,12 @@ void UMetaFluidArtManager::OnLeftMouseUp()
 	bIsDragging = false;
 	if (AllocatedColliders.Contains(MouseID))
 	{
+		const float DecreaseStartTime = (1 - AllocatedColliders[MouseID].Actor->GetActorScale3D().X / InteractionScale) * ScaleDecreaseTime;
 		const int32 DeallocID = GetNonDuplicatedDeallocateID();
 		FluidCollidersToBeDeallocated.Emplace(DeallocID, AllocatedColliders[MouseID]);
 		AllocatedColliders.Remove(MouseID);
-		ColliderDecreaseScale(DeallocID);
+		
+		ColliderDecreaseScale(DeallocID, DecreaseStartTime);
 	}
 }
 
@@ -192,7 +193,7 @@ void UMetaFluidArtManager::SetColliderLocation(const int32 ID, const FVector2D S
 			FluidCollider.Actor->SetActorHiddenInGame(true);
 			FluidCollider.Actor->SetActorScale3D(FVector::Zero());
 			AllocatedColliders.Emplace(ID, FluidCollider);
-			
+
 			ColliderIncreaseScale(ID);
 		}
 		
@@ -202,47 +203,49 @@ void UMetaFluidArtManager::SetColliderLocation(const int32 ID, const FVector2D S
 	{
 		if (AllocatedColliders.Contains(ID))
 		{
+			const float DecreaseStartTime = (1 - AllocatedColliders[ID].Actor->GetActorScale3D().X / InteractionScale) * ScaleDecreaseTime;
 			const int32 DeallocID = GetNonDuplicatedDeallocateID();
 			FluidCollidersToBeDeallocated.Emplace(DeallocID, AllocatedColliders[ID]);
 			AllocatedColliders.Remove(ID);
-			ColliderDecreaseScale(DeallocID);
+
+			ColliderDecreaseScale(DeallocID, DecreaseStartTime);
 		}
 	}	
 }
 
-void UMetaFluidArtManager::ColliderIncreaseScale(const int32 ID)
+void UMetaFluidArtManager::ColliderIncreaseScale(const int32 ID, const float ElapsedTime)
 {
 	if (!AllocatedColliders.Contains(ID)) return;
 
-	const float AddAmount = InteractionScale / ScaleIncreaseTime * 0.033f;
-	float NewScale = AllocatedColliders[ID].Actor->GetActorScale3D().X + AddAmount;
-	if (NewScale > InteractionScale) NewScale = InteractionScale;
-	AllocatedColliders[ID].Actor->SetActorScale3D(FVector(NewScale));
+	const float Alpha = ElapsedTime / ScaleIncreaseTime;
+	const float Progress = EaseInOutQuad(Alpha);
+	const float NewScale = FMath::Clamp(FMath::Lerp(0, InteractionScale, Progress), 0, InteractionScale);
 	
-	if (AllocatedColliders[ID].Actor->GetActorScale3D().X < InteractionScale)
-	{
-		if (AllocatedColliders[ID].ScaleTimerHandle.IsValid())
-		{
-			GetWorld()->GetTimerManager().ClearTimer(AllocatedColliders[ID].ScaleTimerHandle);
-			AllocatedColliders[ID].ScaleTimerHandle.Invalidate();
-		}
+	AllocatedColliders[ID].Actor->SetActorScale3D(FVector(NewScale));
 
+	if (Alpha < 1)
+	{
 		FTimerDelegate TimerDel;
-		TimerDel.BindUFunction(this, FName("ColliderIncreaseScale"), ID);
-		GetWorld()->GetTimerManager().SetTimer(AllocatedColliders[ID].ScaleTimerHandle, TimerDel, 0.033f, false);
+		TimerDel.BindUFunction(this, FName("ColliderIncreaseScale"), ID, ElapsedTime + 0.0167f);
+		GetWorld()->GetTimerManager().SetTimer(AllocatedColliders[ID].ScaleTimerHandle, TimerDel, 0.0167f, false);
+	}
+	else
+	{
+		AllocatedColliders[ID].Actor->SetActorScale3D(FVector(InteractionScale));
 	}
 }
 
-void UMetaFluidArtManager::ColliderDecreaseScale(const int32 ID)
+void UMetaFluidArtManager::ColliderDecreaseScale(const int32 ID, const float ElapsedTime)
 {
 	if (!FluidCollidersToBeDeallocated.Contains(ID)) return;
-		
-	const float SubAmount = InteractionScale / ScaleDecreaseTime * 0.033f;
-	float NewScale = FluidCollidersToBeDeallocated[ID].Actor->GetActorScale3D().X - SubAmount;
-	if (NewScale < 0) NewScale = 0;
-	FluidCollidersToBeDeallocated[ID].Actor->SetActorScale3D(FVector(NewScale));
+
+	const float Alpha = ElapsedTime / ScaleIncreaseTime;
+	const float Progress = EaseInOutQuad(Alpha);
+	const float NewScale = FMath::Clamp(FMath::Lerp(InteractionScale, 0, Progress), 0, InteractionScale);
 	
-	if (FluidCollidersToBeDeallocated[ID].Actor->GetActorScale3D().X > 0)
+	FluidCollidersToBeDeallocated[ID].Actor->SetActorScale3D(FVector(NewScale));
+
+	if (Alpha < 1)
 	{
 		if (FluidCollidersToBeDeallocated[ID].ScaleTimerHandle.IsValid())
 		{
@@ -251,31 +254,14 @@ void UMetaFluidArtManager::ColliderDecreaseScale(const int32 ID)
 		}
 		
 		FTimerDelegate TimerDel;
-		TimerDel.BindUFunction(this, FName("ColliderDecreaseScale"), ID);
-		GetWorld()->GetTimerManager().SetTimer(FluidCollidersToBeDeallocated[ID].ScaleTimerHandle, TimerDel, 0.033f, false);
+		TimerDel.BindUFunction(this, FName("ColliderDecreaseScale"), ID, ElapsedTime + 0.0167f);
+		GetWorld()->GetTimerManager().SetTimer(FluidCollidersToBeDeallocated[ID].ScaleTimerHandle, TimerDel, 0.0167f, false);
 	}
 	else
 	{
+		FluidCollidersToBeDeallocated[ID].Actor->SetActorScale3D(FVector::Zero());
 		MemoryPoolObject->DeallocateActor(FluidCollidersToBeDeallocated[ID].Actor, true);
 	}	
-}
-
-void UMetaFluidArtManager::InitLiDARAllocatedActor(const int32 ID)
-{
-	// MouseCollider.Actor = MemoryPoolObject->AllocateActor().Actor;
-	// MouseCollider.Actor->SetActorHiddenInGame(true);
-	// MouseActor->SetActorScale3D(FVector::Zero());
-	// GetWorld()->GetTimerManager().SetTimer(MouseActorScaleHandle, FTimerDelegate::CreateLambda([this]()->void
-	// {
-	// 	if (MouseActor->GetActorScale3D().X < InteractionScale)
-	// 	{
-	// 		const float AddAmount = (InteractionScale / ScaleIncreaseTime) * 0.033f;
-	// 		float NewScale = MouseActor->GetActorScale3D().X + AddAmount;
-	// 		if (NewScale > InteractionScale) NewScale = InteractionScale;
-	// 				
-	// 		MouseActor->SetActorScale3D(FVector(NewScale));
-	// 	}
-	// }), 0.033f, true);
 }
 
 int32 UMetaFluidArtManager::GetNonDuplicatedDeallocateID() const
@@ -287,4 +273,9 @@ int32 UMetaFluidArtManager::GetNonDuplicatedDeallocateID() const
 	}
 
 	return ID;
+}
+
+float UMetaFluidArtManager::EaseInOutQuad(const float X) const
+{
+	return X < 0.5 ? 2 * X * X : 1 - FMath::Pow(-2 * X + 2, 2) / 2;
 }

@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -120,14 +118,14 @@ private:
 	void SetColliderLocation(const int32 ID, const FVector2D ScreenPosition = FVector2D::Zero());
 
 	UFUNCTION()
-	void ColliderIncreaseScale(const int32 ID);
+	void ColliderIncreaseScale(const int32 ID, const float ElapsedTime = 0);
 
 	UFUNCTION()
-	void ColliderDecreaseScale(const int32 ID);
-
-	UFUNCTION()
-	void InitLiDARAllocatedActor(const int32 ID);
+	void ColliderDecreaseScale(const int32 ID, const float ElapsedTime = 0);
 
 	UFUNCTION()
 	int32 GetNonDuplicatedDeallocateID() const;
+
+private:
+	float EaseInOutQuad(const float X) const;
 };

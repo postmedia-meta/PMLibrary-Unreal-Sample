@@ -10,12 +10,11 @@
 #include "Components/EditableText.h"
 #include "Components/Image.h"
 #include "Components/SizeBox.h"
-#include "FluidArt/MetaFluidArtActorComponent.h"
 #include "FluidArt/MetaFluidArtManager.h"
 #include "FluidArt/MetaFluidArtSaveGame.h"
 
 #if PLATFORM_WINDOWS
-#include "Windows/AllowWindowsPlatformTypes.h"
+#include <Windows/AllowWindowsPlatformTypes.h>
 #include <windows.h>
 #include <commdlg.h>
 #endif
