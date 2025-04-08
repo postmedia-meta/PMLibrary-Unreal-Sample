@@ -167,18 +167,53 @@ void UMetaFluidArtActorComponent::UpdateSpline(USplineComponent* SplineComponent
 
 	auto GenerateRandomPoint = [this]() -> FVector {
 		return GetComponentLocation() + StartLocationOffset + FVector(
-			FMath::FRandRange(-NoiseRange.X * 0.5, NoiseRange.X * 0.5),
+			FMath::FRandRange(-NoiseRange.X * 0.5f, NoiseRange.X * 0.5f),
 			FMath::FRandRange(-NoiseRange.Y * 0.5f, NoiseRange.Y * 0.5f),
 			FMath::FRandRange(0.0f, NoiseRange.Z));
 	};
 
+	const FVector BaseLocation = GetComponentLocation() + StartLocationOffset;
+	TArray<FVector> Vertexs;
+	
+	Vertexs.Emplace(BaseLocation + FVector( NoiseRange.X * 0.5f,  NoiseRange.Y * 0.5f, NoiseRange.Z ));
+	Vertexs.Emplace(BaseLocation + FVector(-NoiseRange.X * 0.5f,  NoiseRange.Y * 0.5f, NoiseRange.Z ));
+	Vertexs.Emplace(BaseLocation + FVector(-NoiseRange.X * 0.5f, -NoiseRange.Y * 0.5f, NoiseRange.Z ));
+	Vertexs.Emplace(BaseLocation + FVector( NoiseRange.X * 0.5f, -NoiseRange.Y * 0.5f, NoiseRange.Z ));
+	Vertexs.Emplace(BaseLocation + FVector( NoiseRange.X * 0.5f,  NoiseRange.Y * 0.5f,  0.0f ));
+	Vertexs.Emplace(BaseLocation + FVector(-NoiseRange.X * 0.5f,  NoiseRange.Y * 0.5f,  0.0f ));
+	Vertexs.Emplace(BaseLocation + FVector(-NoiseRange.X * 0.5f, -NoiseRange.Y * 0.5f,  0.0f ));
+	Vertexs.Emplace(BaseLocation + FVector( NoiseRange.X * 0.5f, -NoiseRange.Y * 0.5f,  0.0f ));
+	
+	
 	FVector PrevVector = FVector::Zero();
 	for (int32 j = 0; j < NoiseFrequency; ++j)
 	{
 		FVector RandomVector = GenerateRandomPoint();
 
 		if (j == 0) PrevVector = RandomVector;
-		while (FVector::Dist(PrevVector, RandomVector) < MinLength || FVector::Dist(PrevVector, RandomVector) > MaxLength) RandomVector = GenerateRandomPoint();
+		float MaxDist = 0;
+		float MinDist = 999999;
+		for (auto Vector : Vertexs)
+		{
+			const float EdgeDist = FVector::Dist(PrevVector, Vector);
+			if (MaxDist < EdgeDist)
+			{
+				MaxDist = EdgeDist;
+			}
+			if (MinDist > EdgeDist)
+			{
+				MinDist = EdgeDist;
+			}
+		}
+
+		if (MaxDist > MaxLength) MaxDist = MaxLength;
+		if (MinDist > MinLength) MinDist = MinLength;
+		if (MinDist + 100 > MaxDist) MinDist = MaxDist - 100;
+		
+		while (FVector::Dist(PrevVector, RandomVector) < MinDist || FVector::Dist(PrevVector, RandomVector) > MaxDist)
+		{
+			RandomVector = GenerateRandomPoint();
+		}
 		PrevVector = RandomVector;
         
 		SplineComponent->AddSplinePoint(RandomVector, ESplineCoordinateSpace::World);

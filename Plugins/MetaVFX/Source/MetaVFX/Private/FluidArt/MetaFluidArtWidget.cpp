@@ -14,7 +14,7 @@
 #include "FluidArt/MetaFluidArtSaveGame.h"
 
 #if PLATFORM_WINDOWS
-#include <Windows/AllowWindowsPlatformTypes.h>
+#include "Windows/AllowWindowsPlatformTypes.h"
 #include <windows.h>
 #include <commdlg.h>
 #endif
