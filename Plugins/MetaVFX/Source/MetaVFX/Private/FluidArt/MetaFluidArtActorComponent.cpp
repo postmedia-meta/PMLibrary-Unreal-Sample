@@ -117,6 +117,7 @@ void UMetaFluidArtActorComponent::NextTexture()
 			GetWorld()->GetTimerManager().ClearTimer(NoiseHandle);
 			NoiseHandle.Invalidate();
 		}
+		
 		UpdateNoiseMovement();
 	}
 		
@@ -124,7 +125,7 @@ void UMetaFluidArtActorComponent::NextTexture()
 
 void UMetaFluidArtActorComponent::UpdateNoiseMovement()
 {
-	if (NoiseForce == 0) return;
+	if (!bAutoNoise && NoiseForce == 0) return;
 	
 	TotalTime = FMath::Clamp(Duration, 0, TextureChangeDelay * 0.6f);
 	if (ElapsedTime < TotalTime)

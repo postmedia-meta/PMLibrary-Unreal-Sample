@@ -164,9 +164,11 @@ void UMetaFluidArtManager::OnLeftMouseUp()
 	{
 		const float DecreaseStartTime = (1 - AllocatedColliders[MouseID].Actor->GetActorScale3D().X / InteractionScale) * ScaleDecreaseTime;
 		const int32 DeallocID = GetNonDuplicatedDeallocateID();
+		UE_LOG(LogTemp, Warning, TEXT("DecreaseStartTime : %.4f"), DecreaseStartTime);
+		UE_LOG(LogTemp, Warning, TEXT("Scale : %.4f"), AllocatedColliders[MouseID].Actor->GetActorScale3D().X);
 		FluidCollidersToBeDeallocated.Emplace(DeallocID, AllocatedColliders[MouseID]);
 		AllocatedColliders.Remove(MouseID);
-		
+
 		ColliderDecreaseScale(DeallocID, DecreaseStartTime);
 	}
 }
@@ -238,8 +240,8 @@ void UMetaFluidArtManager::ColliderIncreaseScale(const int32 ID, const float Ela
 void UMetaFluidArtManager::ColliderDecreaseScale(const int32 ID, const float ElapsedTime)
 {
 	if (!FluidCollidersToBeDeallocated.Contains(ID)) return;
-
-	const float Alpha = ElapsedTime / ScaleIncreaseTime;
+	
+	const float Alpha = ElapsedTime / ScaleDecreaseTime;
 	const float Progress = EaseInOutQuad(Alpha);
 	const float NewScale = FMath::Clamp(FMath::Lerp(InteractionScale, 0, Progress), 0, InteractionScale);
 	
