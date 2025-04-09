@@ -41,6 +41,7 @@ public class MetaVFX : ModuleRules
 				"Niagara",
 				"InputCore",
 				"UMG",
+				"MediaAssets",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

@@ -124,8 +124,8 @@ void UMetaMagicTrailWidget::InitVariable()
 	MetaMagicTrailComponent->SpriteColor = MetaMagicTrailSaveGame->MetaMagicTrailData.SpriteColor;
 	MetaMagicTrailComponent->bAutoColor = MetaMagicTrailSaveGame->MetaMagicTrailData.bAutoColor;
 	MetaMagicTrailComponent->bUseMouse = MetaMagicTrailSaveGame->MetaMagicTrailData.bUseMouse;
-	MetaMagicTrailComponent->bUseImageFile = MetaMagicTrailSaveGame->MetaMagicTrailData.bUseFile;
-	MetaMagicTrailComponent->ImagePath.FilePath = MetaMagicTrailSaveGame->MetaMagicTrailData.FilePath;
+	MetaMagicTrailComponent->bUseFile = MetaMagicTrailSaveGame->MetaMagicTrailData.bUseFile;
+	MetaMagicTrailComponent->AssetPath.FilePath = MetaMagicTrailSaveGame->MetaMagicTrailData.FilePath;
 
 	InitCreatePoolNum->SetText(FText::FromString(FString::FromInt(MetaMagicTrailSaveGame->MetaMagicTrailData.InitCreatePoolNum)));
 	RateScale->SetText(FText::FromString(FString::SanitizeFloat(MetaMagicTrailSaveGame->MetaMagicTrailData.RateScale)));
@@ -203,7 +203,7 @@ void UMetaMagicTrailWidget::ApplySettings()
 	MetaMagicTrailComponent->SpriteColor = FColor(FCString::Atof(*SpriteColorR->GetText().ToString()), FCString::Atof(*SpriteColorG->GetText().ToString()), FCString::Atof(*SpriteColorB->GetText().ToString()));
 	MetaMagicTrailComponent->bAutoColor = AutoColorCheckBox->IsChecked();
 	MetaMagicTrailComponent->bUseMouse = UseMouseCheckBox->IsChecked();
-	MetaMagicTrailComponent->bUseImageFile = UseFileCheckBox->IsChecked();
+	MetaMagicTrailComponent->bUseFile = UseFileCheckBox->IsChecked();
 	MetaMagicTrailComponent->SetFilePath(SelectedFilePathTextBlock->GetText().ToString());
 	
 	if (MaskShapeComboBox->GetSelectedOption().Equals(TEXT("Default")))
@@ -233,9 +233,9 @@ void UMetaMagicTrailWidget::ApplySettings()
 	MetaMagicTrailSaveGame->MetaMagicTrailData.SpriteColor = MetaMagicTrailComponent->SpriteColor;
 	MetaMagicTrailSaveGame->MetaMagicTrailData.bAutoColor = MetaMagicTrailComponent->bAutoColor;
 	MetaMagicTrailSaveGame->MetaMagicTrailData.bUseMouse = MetaMagicTrailComponent->bUseMouse;
-	MetaMagicTrailSaveGame->MetaMagicTrailData.bUseFile = MetaMagicTrailComponent->bUseImageFile;
+	MetaMagicTrailSaveGame->MetaMagicTrailData.bUseFile = MetaMagicTrailComponent->bUseFile;
 	MetaMagicTrailSaveGame->MetaMagicTrailData.MaskShape = MetaMagicTrailComponent->MaskShape;
-	MetaMagicTrailSaveGame->MetaMagicTrailData.FilePath = MetaMagicTrailComponent->ImagePath.FilePath;
+	MetaMagicTrailSaveGame->MetaMagicTrailData.FilePath = MetaMagicTrailComponent->AssetPath.FilePath;
 	MetaMagicTrailSaveGame->SaveGame();
 }
 
@@ -306,7 +306,7 @@ void UMetaMagicTrailWidget::OnOpenFileButton()
 	ofn.hwndOwner = nullptr;
 	ofn.lpstrFile = szFile;
 	ofn.nMaxFile = BufferSize / sizeof(TCHAR);
-	ofn.lpstrFilter = TEXT("Image Files (*.jpg;*.jpeg;*.png;*.bmp;*.tga;*.psd;*.exr)\0*.jpg;*.jpeg;*.png;*.bmp;*.tga;*.psd;*.exr\0");
+	ofn.lpstrFilter = TEXT("Video Files (*.mp4)\0*.mp4\0Image Files (*.jpg;*.jpeg;*.png;*.bmp;*.tga;*.psd;*.exr)\0*.jpg;*.jpeg;*.png;*.bmp;*.tga;*.psd;*.exr\0");
 	ofn.nFilterIndex = 1;
 	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
     

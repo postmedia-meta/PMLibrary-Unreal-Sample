@@ -10,6 +10,9 @@ class ANiagaraActor;
 class UNiagaraSystem;
 class UNiagaraComponent;
 class UUserWidget;
+class UMediaPlayer;
+class UMediaTexture;
+class UFileMediaSource;
 
 UENUM(Blueprintable)
 enum class EMaskShape : uint8
@@ -70,6 +73,12 @@ class METAVFX_API UMetaMagicTrailManager : public UActorComponent
 	
 	UPROPERTY()
 	UMaterialInstanceDynamic* TrailMaterialInstanceDynamic;
+
+	UPROPERTY()
+	UMediaPlayer* MediaPlayer;
+
+	UPROPERTY()
+	UMediaTexture* MediaTexture;
 	
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="MetaMagicTrail")
@@ -80,15 +89,22 @@ public:
 
 	// Masking texture from file
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail|Particle")
-	bool bUseImageFile = false;
+	bool bUseFile = false;
 
 	// Supported jpg/jpeg/png/bmp/tga/psd/exr
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail|Particle", meta=(EditCondition="bUseImageFile == true", EditConditionHides), AssetRegistrySearchable)
-	FFilePath ImagePath;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail|Particle", meta=(EditCondition="bUseFile == true", EditConditionHides), AssetRegistrySearchable)
+	FFilePath AssetPath;
+
+	// Masking texture from file
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail|Particle", meta=(EditCondition="bUseFile == false", EditConditionHides), AssetRegistrySearchable)
+	bool bVideo = false;
 	
 	// Masking texture
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail|Particle", meta=(EditCondition="bUseImageFile == false", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail|Particle", meta=(EditCondition="bUseFile == false && bVideo == false", EditConditionHides))
 	UTexture2D* Texture2D;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail|Particle", meta=(EditCondition="bUseFile == false && bVideo == true", EditConditionHides))
+	UFileMediaSource* FileMediaSource;
 
 	// particle rate scale
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaMagicTrail|Particle")
@@ -171,7 +187,10 @@ private:
 	FTimerHandle MouseDelayHandle;
 
 	UPROPERTY()
-	UTexture2D* TextureFromFile;
+	UTexture* TextureFromFile;
+
+	UPROPERTY()
+	UTexture* TextureFromAsset;
 
 protected:
 	virtual void BeginPlay() override;

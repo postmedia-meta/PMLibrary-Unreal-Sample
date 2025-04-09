@@ -11,6 +11,7 @@
 class UNiagaraSystem;
 class UNiagaraComponent;
 class USplineComponent;
+class AStaticMeshActor;
 
 UCLASS( ClassGroup="MetaVFX", meta=(BlueprintSpawnableComponent) )
 class METAVFX_API UMetaFluidArtActorComponent : public UNiagaraComponent

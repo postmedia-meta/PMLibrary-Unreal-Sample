@@ -2,6 +2,9 @@
 
 #include "MagicTrail/MetaMagicTrailManager.h"
 
+#include "FileMediaSource.h"
+#include "MediaPlayer.h"
+#include "MediaTexture.h"
 #include "MemoryPoolObject.h"
 #include "MagicTrail/MetaMagicTrailWidget.h"
 #include "NiagaraActor.h"
@@ -55,6 +58,8 @@ void UMetaMagicTrailManager::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (!bUseFile) AssetPath.FilePath = TEXT(""); 
+
 	PlayerController = Cast<APlayerController>(GetOwner());
 	if (PlayerController == nullptr)
 	{
@@ -74,11 +79,28 @@ void UMetaMagicTrailManager::BeginPlay()
 		MagicTrailWidget->AddToViewport();
 		MagicTrailWidget->HideWidget();
 	}
+
+	MediaPlayer = NewObject<UMediaPlayer>(PlayerController, UMediaPlayer::StaticClass(), TEXT("TrailMediaPlayer"));
+	MediaTexture = NewObject<UMediaTexture>(PlayerController, UMediaTexture::StaticClass(), TEXT("TrailMediaTexture"));
+	MediaPlayer->PlayOnOpen = true;
+	MediaPlayer->SetLooping(true);
+	MediaTexture->SetMediaPlayer(MediaPlayer);
+	MediaTexture->UpdateResource();
+	
+	if (bVideo)
+	{
+		MediaPlayer->OpenSource(FileMediaSource);
+		TextureFromAsset = MediaTexture;
+	}
+	else
+	{
+		TextureFromAsset = Texture2D;
+	}
 	
 	ChangeMaskShape(MaskShape);
 	SpriteMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(DefaultSpriteMaterial, nullptr);
-	SpriteMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), bUseImageFile ? TextureFromFile : Texture2D);
-	SetFilePath(FPaths::ConvertRelativePathToFull(ImagePath.FilePath));
+	SpriteMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), bUseFile ? TextureFromFile : TextureFromAsset);
+	SetFilePath(FPaths::ConvertRelativePathToFull(AssetPath.FilePath));
 	
 	MemoryPoolObject = NewObject<UMemoryPoolObject>(PlayerController, TEXT("Memory Pool"));
 	MemoryPoolObject->SetActorClass(MagicTrailNiagaraActorClass);
@@ -111,6 +133,9 @@ void UMetaMagicTrailManager::BeginPlay()
 void UMetaMagicTrailManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
+
+	MediaPlayer = nullptr;
+	MediaTexture = nullptr;
 	
 	if (MouseDelayHandle.IsValid())
 	{
@@ -263,35 +288,61 @@ void UMetaMagicTrailManager::ChangeMaskShape(const EMaskShape Shape)
 		break;
 	}
 	
-	TrailMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), bUseImageFile ? TextureFromFile : Texture2D);
+	TrailMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), bUseFile ? TextureFromFile : TextureFromAsset);
 }
 
 bool UMetaMagicTrailManager::SetFilePath(const FString& NewFilePath)
 {
-	if (UTexture2D* LoadedTexture = UKismetRenderingLibrary::ImportFileAsTexture2D(GetWorld(), NewFilePath))
+	const FString FileExtensionWithDot  = FPaths::GetExtension(NewFilePath, true);
+	
+	// video
+	if (FileExtensionWithDot.Equals(TEXT(".mp4"), ESearchCase::IgnoreCase))
 	{
-		TextureFromFile = LoadedTexture;
-		ImagePath.FilePath = NewFilePath;
+		const FString URL = TEXT("file://") + NewFilePath;
+		if (MediaPlayer->OpenUrl(URL))
+		{
+			TextureFromFile = MediaTexture;
+			AssetPath.FilePath = NewFilePath;
 
-		TrailMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), bUseImageFile ? TextureFromFile : Texture2D);
-		SpriteMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), bUseImageFile ? TextureFromFile : Texture2D);
+			TrailMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), bUseFile ? TextureFromFile : TextureFromAsset);
+			SpriteMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), bUseFile ? TextureFromFile : TextureFromAsset);
 
-		return true;
+			return true;
+		}
+	}
+
+	// image
+	else
+	{
+		if (UTexture2D* LoadedTexture = UKismetRenderingLibrary::ImportFileAsTexture2D(GetWorld(), NewFilePath))
+		{
+			TextureFromFile = LoadedTexture;
+			AssetPath.FilePath = NewFilePath;
+
+			TrailMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), bUseFile ? TextureFromFile : TextureFromAsset);
+			SpriteMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), bUseFile ? TextureFromFile : TextureFromAsset);
+
+			return true;
+		}	
 	}
 
 	TextureFromFile = nullptr;
-	ImagePath.FilePath = TEXT("");
-	TrailMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), Texture2D);
-	SpriteMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), Texture2D);
+	AssetPath.FilePath = TEXT("");
+	if (bVideo)
+	{
+		MediaPlayer->OpenSource(FileMediaSource);
+	}
+	TrailMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), TextureFromAsset);
+	SpriteMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), TextureFromAsset);
 	return false;
 }
 
 void UMetaMagicTrailManager::ClearFilePath()
 {
 	TextureFromFile = nullptr;
-	ImagePath.FilePath = TEXT("");
-	TrailMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), Texture2D);
-	SpriteMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), Texture2D);
+	AssetPath.FilePath = TEXT("");
+	TrailMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), TextureFromAsset);
+	SpriteMaterialInstanceDynamic->SetTextureParameterValue(TEXT("Texture"), TextureFromAsset);
 }
 
 void UMetaMagicTrailManager::OnViewportResized(FViewport* Viewport, unsigned int I)

@@ -101,10 +101,11 @@ void UMetaFluidArtActorComponent::EndPlay(const EEndPlayReason::Type EndPlayReas
 
 void UMetaFluidArtActorComponent::NextTexture()
 {
-	if (Textures.IsEmpty()) return;
-	
-	if (++CurrentIndex >= Textures.Num()) CurrentIndex = 0;
-	SetVariableTexture(TEXT("Texture"), Textures[CurrentIndex]);
+	if (!Textures.IsEmpty())
+	{
+		if (++CurrentIndex >= Textures.Num()) CurrentIndex = 0;
+		SetVariableTexture(TEXT("Texture"), Textures[CurrentIndex]);
+	}
 
 	if (bAutoNoise)
 	{
@@ -172,18 +173,16 @@ void UMetaFluidArtActorComponent::UpdateSpline(USplineComponent* SplineComponent
 			FMath::FRandRange(0.0f, NoiseRange.Z));
 	};
 
+	TArray<FVector> Vertexes;
 	const FVector BaseLocation = GetComponentLocation() + StartLocationOffset;
-	TArray<FVector> Vertexs;
-	
-	Vertexs.Emplace(BaseLocation + FVector( NoiseRange.X * 0.5f,  NoiseRange.Y * 0.5f, NoiseRange.Z ));
-	Vertexs.Emplace(BaseLocation + FVector(-NoiseRange.X * 0.5f,  NoiseRange.Y * 0.5f, NoiseRange.Z ));
-	Vertexs.Emplace(BaseLocation + FVector(-NoiseRange.X * 0.5f, -NoiseRange.Y * 0.5f, NoiseRange.Z ));
-	Vertexs.Emplace(BaseLocation + FVector( NoiseRange.X * 0.5f, -NoiseRange.Y * 0.5f, NoiseRange.Z ));
-	Vertexs.Emplace(BaseLocation + FVector( NoiseRange.X * 0.5f,  NoiseRange.Y * 0.5f,  0.0f ));
-	Vertexs.Emplace(BaseLocation + FVector(-NoiseRange.X * 0.5f,  NoiseRange.Y * 0.5f,  0.0f ));
-	Vertexs.Emplace(BaseLocation + FVector(-NoiseRange.X * 0.5f, -NoiseRange.Y * 0.5f,  0.0f ));
-	Vertexs.Emplace(BaseLocation + FVector( NoiseRange.X * 0.5f, -NoiseRange.Y * 0.5f,  0.0f ));
-	
+	Vertexes.Emplace(BaseLocation + FVector( NoiseRange.X * 0.5f,  NoiseRange.Y * 0.5f, NoiseRange.Z ));
+	Vertexes.Emplace(BaseLocation + FVector(-NoiseRange.X * 0.5f,  NoiseRange.Y * 0.5f, NoiseRange.Z ));
+	Vertexes.Emplace(BaseLocation + FVector(-NoiseRange.X * 0.5f, -NoiseRange.Y * 0.5f, NoiseRange.Z ));
+	Vertexes.Emplace(BaseLocation + FVector( NoiseRange.X * 0.5f, -NoiseRange.Y * 0.5f, NoiseRange.Z ));
+	Vertexes.Emplace(BaseLocation + FVector( NoiseRange.X * 0.5f,  NoiseRange.Y * 0.5f,  0.0f ));
+	Vertexes.Emplace(BaseLocation + FVector(-NoiseRange.X * 0.5f,  NoiseRange.Y * 0.5f,  0.0f ));
+	Vertexes.Emplace(BaseLocation + FVector(-NoiseRange.X * 0.5f, -NoiseRange.Y * 0.5f,  0.0f ));
+	Vertexes.Emplace(BaseLocation + FVector( NoiseRange.X * 0.5f, -NoiseRange.Y * 0.5f,  0.0f ));
 	
 	FVector PrevVector = FVector::Zero();
 	for (int32 j = 0; j < NoiseFrequency; ++j)
@@ -193,7 +192,7 @@ void UMetaFluidArtActorComponent::UpdateSpline(USplineComponent* SplineComponent
 		if (j == 0) PrevVector = RandomVector;
 		float MaxDist = 0;
 		float MinDist = 999999;
-		for (auto Vector : Vertexs)
+		for (auto Vector : Vertexes)
 		{
 			const float EdgeDist = FVector::Dist(PrevVector, Vector);
 			if (MaxDist < EdgeDist)
