@@ -54,6 +54,9 @@ public:
 	UMTKArrowSwitchWidget* ReflectionQuality;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="GraphicSettingWidget")
+	UComboBoxString* AntiAliasingMethod;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="GraphicSettingWidget")
 	UButton* ApplyButton;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(BindWidget), Category="GraphicSettingWidget")
@@ -94,20 +97,23 @@ protected:
 private:
 	UFUNCTION()
 	void Setup();
-	
-public:
-	UFUNCTION(BlueprintCallable, Category="GraphicSettingWidget")
+
+	UFUNCTION()
 	void InitVariable();
 
-	UFUNCTION(BlueprintCallable, Category="GraphicSettingWidget")
+	UFUNCTION()
 	void ChangeResolutionX(const FText& Text, ETextCommit::Type CommitMethod);
 
-	UFUNCTION(BlueprintCallable, Category="GraphicSettingWidget")
+	UFUNCTION()
 	void ChangeResolutionY(const FText& Text, ETextCommit::Type CommitMethod);
 
-	UFUNCTION(BlueprintCallable, Category="GraphicSettingWidget")
+	UFUNCTION()
 	void ChangeOverallQuality(const int32 Quality);
+
+	UFUNCTION()
+	void ChangeAAMethod(FString SelectedItem, ESelectInfo::Type SelectionType);
 	
+public:
 	UFUNCTION(BlueprintCallable, Category="GraphicSettingWidget")
 	void ApplySettings();
 

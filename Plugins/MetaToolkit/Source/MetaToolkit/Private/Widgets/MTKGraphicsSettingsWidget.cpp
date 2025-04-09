@@ -37,6 +37,7 @@ void UMTKGraphicsSettingsWidget::NativeConstruct()
 	CloseButton->OnClicked.AddDynamic(this, &UMTKGraphicsSettingsWidget::HideWidget);
 	ScreenMessageButton->OnClicked.AddDynamic(this, &UMTKGraphicsSettingsWidget::ToggleScreenMessage);
 	OverallQuality->OnChangedIndex.AddDynamic(this, &UMTKGraphicsSettingsWidget::ChangeOverallQuality);
+	AntiAliasingMethod->OnSelectionChanged.AddDynamic(this, &UMTKGraphicsSettingsWidget::ChangeAAMethod);
 
 	Setup();
 }
@@ -50,15 +51,23 @@ void UMTKGraphicsSettingsWidget::NativeDestruct()
 		GetWorld()->GetTimerManager().ClearTimer(InitTimerHandle);
 		InitTimerHandle.Invalidate();
 	}
+
+	ResolutionX->OnTextCommitted.RemoveDynamic(this, &UMTKGraphicsSettingsWidget::ChangeResolutionX);
+	ResolutionY->OnTextCommitted.RemoveDynamic(this, &UMTKGraphicsSettingsWidget::ChangeResolutionY);
+	ApplyButton->OnClicked.RemoveDynamic(this, &UMTKGraphicsSettingsWidget::ApplySettings);
+	CloseButton->OnClicked.RemoveDynamic(this, &UMTKGraphicsSettingsWidget::HideWidget);
+	ScreenMessageButton->OnClicked.RemoveDynamic(this, &UMTKGraphicsSettingsWidget::ToggleScreenMessage);
+	OverallQuality->OnChangedIndex.RemoveDynamic(this, &UMTKGraphicsSettingsWidget::ChangeOverallQuality);
+	AntiAliasingMethod->OnSelectionChanged.RemoveDynamic(this, &UMTKGraphicsSettingsWidget::ChangeAAMethod);
 }
 
 void UMTKGraphicsSettingsWidget::MetaNativeOnViewportResized(FViewport* Viewport, unsigned int I)
 {
 	Super::MetaNativeOnViewportResized(Viewport, I);
-	
+
 	if (PlayerController != nullptr)
 	{
-		ViewportSizeTextBlock->SetText(FText::FromString(FString::Printf(TEXT("%dx%d"), ViewportSize.X, ViewportSize.Y)));	
+		ViewportSizeTextBlock->SetText(FText::FromString(FString::Printf(TEXT("%dx%d"), ViewportSize.X, ViewportSize.Y)));
 	}
 }
 
@@ -69,7 +78,7 @@ void UMTKGraphicsSettingsWidget::Setup()
 		ViewportSizeTextBlock->SetText(FText::FromString(FString::Printf(TEXT("%dx%d"), ViewportSize.X, ViewportSize.Y)));
 		OriginMouseCaptureMode = GetWorld()->GetGameViewport()->GetMouseCaptureMode();
 		OriginMouseLockMode = GetWorld()->GetGameViewport()->GetMouseLockMode();
-		
+
 		InitVariable();
 		ApplySettings();
 	}
@@ -84,7 +93,39 @@ void UMTKGraphicsSettingsWidget::InitVariable()
 	// Screen Message
 	GAreScreenMessagesEnabled = MTKSaveGame->GraphicsSettings.bEnabledScreenMessage;
 	ScreenMessageStateTextBlock->SetText(GAreScreenMessagesEnabled ? FText::FromString(TEXT("Show")) : FText::FromString(TEXT("Hide")));
-	
+
+	// Anti Aliasing
+	if (IConsoleVariable* AAConsoleVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.AntiAliasingMethod")))
+	{
+		/* Method
+		* 0 : None
+		* 1 : FXAA
+		* 2 : TAA
+		* 3 : MSAA (Only use forward shading)
+		* 4 : TSR
+		*/
+
+		uint8 Method = MTKSaveGame->GraphicsSettings.AntiAliasingMethod;
+		if (IConsoleVariable* ForwardShadingVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.ForwardShading")))
+		{
+			// Forward
+			if (ForwardShadingVar->GetInt() == 1)
+			{
+				if (Method == 1 || Method == 2 || Method == 4) Method = 0;
+			}
+			// Deferred
+			else
+			{
+				if (Method == 3) Method = 0;
+			}
+		}
+
+		AAConsoleVar->Set(Method, ECVF_SetByConsole);
+		AntiAliasingMethod->SetSelectedIndex(Method);
+
+		UE_LOG(LogTemp, Warning, TEXT("AntiAliasingMethod: %d"), Method);
+	}
+
 	// Quality setting
 	OverallQuality->SetCurrentIndex(MTKSaveGame->GraphicsSettings.OverallQuality);
 	ViewDistanceQuality->SetCurrentIndex(MTKSaveGame->GraphicsSettings.ViewDistanceQuality);
@@ -137,6 +178,34 @@ void UMTKGraphicsSettingsWidget::ChangeOverallQuality(const int32 Quality)
 	ReflectionQuality->SetCurrentIndex(Quality);
 }
 
+void UMTKGraphicsSettingsWidget::ChangeAAMethod(FString SelectedItem, ESelectInfo::Type SelectionType)
+{
+	if (IConsoleVariable* ForwardShadingVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.ForwardShading")))
+	{
+		// Forward
+		if (ForwardShadingVar->GetInt() == 1)
+		{
+			// Only MSAA is available
+			if (AntiAliasingMethod->GetSelectedIndex() == 1 || AntiAliasingMethod->GetSelectedIndex() == 2 || AntiAliasingMethod->GetSelectedIndex() == 4)
+			{
+				AntiAliasingMethod->SetSelectedIndex(0);
+				UE_LOG(LogTemp, Log, TEXT("Only MSAA is available in forward shading"));
+			}
+		}
+
+		// Deferred
+		else
+		{
+			// MSAA unavailable
+			if (AntiAliasingMethod->GetSelectedIndex() == 3)
+			{
+				AntiAliasingMethod->SetSelectedIndex(0);
+				UE_LOG(LogTemp, Log, TEXT("MSAA is available in forward shading"));
+			}
+		}
+	}
+}
+
 void UMTKGraphicsSettingsWidget::ShowWidget()
 {
 	InitVariable();
@@ -152,7 +221,7 @@ void UMTKGraphicsSettingsWidget::HideWidget()
 		PlayerController->SetInputMode(FInputModeGameOnly());
 		GetWorld()->GetGameViewport()->SetHideCursorDuringCapture(PrevHideCursorDuringCapture);
 		GetWorld()->GetGameViewport()->SetMouseCaptureMode(OriginMouseCaptureMode);
-		GetWorld()->GetGameViewport()->SetMouseLockMode(OriginMouseLockMode);	
+		GetWorld()->GetGameViewport()->SetMouseLockMode(OriginMouseLockMode);
 	}
 	SetVisibility(ESlateVisibility::Collapsed);
 }
@@ -165,11 +234,24 @@ void UMTKGraphicsSettingsWidget::ToggleScreenMessage()
 
 void UMTKGraphicsSettingsWidget::ApplySettings()
 {
+	// Log
 	MTKSaveGame->GraphicsSettings.bEnabledScreenMessage = GAreScreenMessagesEnabled;
-	MTKSaveGame->SaveGame();
-	
+
+	// Anti Aliasing
+	if (IConsoleVariable* AAConsoleVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.AntiAliasingMethod")))
+	{
+		const uint8 Method = AntiAliasingMethod->GetSelectedIndex();
+
+		AAConsoleVar->Set(Method, ECVF_SetByConsole);
+		MTKSaveGame->GraphicsSettings.AntiAliasingMethod = Method;
+
+		UE_LOG(LogTemp, Warning, TEXT("AntiAliasingMethod: %d"), Method);
+	}
+
 	ApplyResolutionSettings();
 	ApplyGraphicsSettings();
+
+	MTKSaveGame->SaveGame();
 }
 
 void UMTKGraphicsSettingsWidget::ApplyResolutionSettings()
@@ -178,8 +260,8 @@ void UMTKGraphicsSettingsWidget::ApplyResolutionSettings()
 	const EWindowMode::Type WindowMode = WindowModeMap.FindRef(ModeComboBox->GetSelectedIndex());
 
 	if (ViewportSize == Resolution && GameUserSettings->GetFullscreenMode() == WindowMode) return;
-	if (GameUserSettings->GetFullscreenMode() == WindowMode &&  WindowMode == EWindowMode::Type::WindowedFullscreen) return;
-	
+	if (GameUserSettings->GetFullscreenMode() == WindowMode && WindowMode == EWindowMode::Type::WindowedFullscreen) return;
+
 	GameUserSettings->SetScreenResolution(Resolution);
 	GameUserSettings->SetFullscreenMode(WindowMode);
 	GameUserSettings->ApplyResolutionSettings(false);
@@ -210,6 +292,6 @@ void UMTKGraphicsSettingsWidget::ApplyGraphicsSettings()
 	MTKSaveGame->GraphicsSettings.AntiAliasingQuality = AntiAliasingQuality->GetCurrentIndex();
 	MTKSaveGame->GraphicsSettings.ReflectionQuality = ReflectionQuality->GetCurrentIndex();
 	MTKSaveGame->SaveGame();
-	
+
 	UE_LOG(LogTemp, Log, TEXT("Apply Graphics settings"));
 }

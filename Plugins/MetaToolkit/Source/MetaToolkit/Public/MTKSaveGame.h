@@ -19,6 +19,9 @@ struct FGraphicsSettings
 	uint8 WindowMode = EWindowMode::Windowed;
 
 	UPROPERTY(VisibleAnywhere, Category="Graphics")
+	uint8 AntiAliasingMethod = 4;
+
+	UPROPERTY(VisibleAnywhere, Category="Graphics")
 	uint8 OverallQuality = 3;
 
 	UPROPERTY(VisibleAnywhere, Category="Graphics")
