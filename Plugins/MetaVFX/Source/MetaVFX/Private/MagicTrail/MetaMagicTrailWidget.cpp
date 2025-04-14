@@ -14,11 +14,10 @@
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
 #include "GameFramework/PlayerController.h"
+#include "Engine/GameViewportClient.h"
 
 #if PLATFORM_WINDOWS
-#include <Windows/AllowWindowsPlatformTypes.h>
 #include <windows.h>
-#include <commdlg.h>
 #endif
 
 void UMetaMagicTrailWidget::NativeConstruct()

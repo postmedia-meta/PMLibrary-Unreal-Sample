@@ -13,6 +13,10 @@ class UUserWidget;
 class UMediaPlayer;
 class UMediaTexture;
 class UFileMediaSource;
+class UMaterial;
+class UMaterialInstanceDynamic;
+class UTexture;
+class FViewport;
 
 UENUM(Blueprintable)
 enum class EMaskShape : uint8

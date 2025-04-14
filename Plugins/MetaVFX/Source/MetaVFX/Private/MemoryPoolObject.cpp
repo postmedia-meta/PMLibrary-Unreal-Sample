@@ -3,6 +3,9 @@
 
 #include "MemoryPoolObject.h"
 
+#include "GameFramework/Actor.h"
+#include "Engine/World.h"
+
 FAllocatedActor UMemoryPoolObject::AllocateActor()
 {
 	if (ActorClass == nullptr) return FAllocatedActor(nullptr, 0);

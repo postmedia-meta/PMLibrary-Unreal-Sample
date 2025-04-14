@@ -5,6 +5,10 @@
 #include "FluidArt/MetaFluidArtActorComponent.h"
 #include "FluidArt/MetaFluidArtWidget.h"
 #include "Kismet/GameplayStatics.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Components/InputComponent.h"
+#include "UnrealClient.h"
+#include "TimerManager.h"
 
 // Sets default values for this component's properties
 UMetaFluidArtManager::UMetaFluidArtManager()

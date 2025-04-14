@@ -5,9 +5,15 @@
 
 #include "NiagaraSystem.h"
 #include "Components/SplineComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMeshActor.h"
+#include "Engine/StaticMesh.h"
+#include "Engine/Texture.h"
+#include "Engine/Texture2D.h"
 #include "FluidArt/MetaFluidArtSaveGame.h"
 #include "Kismet/KismetRenderingLibrary.h"
+#include "UObject/ConstructorHelpers.h"
+#include "TimerManager.h"
 
 // Sets default values for this component's properties
 UMetaFluidArtActorComponent::UMetaFluidArtActorComponent()

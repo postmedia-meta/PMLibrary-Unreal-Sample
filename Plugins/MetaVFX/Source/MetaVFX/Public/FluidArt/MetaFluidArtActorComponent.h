@@ -79,10 +79,9 @@ private:
 	TArray<FString> FilePaths;
 	
 	int32 CurrentIndex = -1;
-	UPROPERTY(VisibleAnywhere)
+	
 	float TotalTime = 0;
-
-	UPROPERTY(VisibleAnywhere)
+	
 	float ElapsedTime = 0;
 	
 	FTimerHandle TextureChangeHandle;

@@ -7,6 +7,8 @@
 class UMetaFluidArtWidget;
 class UMetaFluidArtActorComponent;
 class UMemoryPoolObject;
+class UUserWidget;
+class FViewport;
 
 USTRUCT(Blueprintable)
 struct FFluidCollider
@@ -34,10 +36,10 @@ class METAVFX_API UMetaFluidArtManager : public UActorComponent
 	UPROPERTY()
 	APlayerController* PlayerController;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="UMetaFluidArtManager")
 	TArray<UMetaFluidArtActorComponent*> MetaFluidArtActorComponents;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category="UMetaFluidArtManager")
 	TSubclassOf<AActor> InteractionCollisionClass;
 	
 public:	

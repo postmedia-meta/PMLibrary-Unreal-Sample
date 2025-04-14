@@ -12,11 +12,10 @@
 #include "Components/SizeBox.h"
 #include "FluidArt/MetaFluidArtManager.h"
 #include "FluidArt/MetaFluidArtSaveGame.h"
+#include "Engine/GameViewportClient.h"
 
 #if PLATFORM_WINDOWS
-#include "Windows/AllowWindowsPlatformTypes.h"
 #include <windows.h>
-#include <commdlg.h>
 #endif
 
 void UMetaFluidArtWidget::NativeConstruct()

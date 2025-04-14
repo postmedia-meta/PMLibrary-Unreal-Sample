@@ -2,6 +2,8 @@
 
 #include "MagicTrail/MetaMagicTrailManager.h"
 
+#include "UnrealClient.h"
+#include "TimerManager.h"
 #include "FileMediaSource.h"
 #include "MediaPlayer.h"
 #include "MediaTexture.h"
@@ -12,6 +14,13 @@
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetRenderingLibrary.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Engine/Texture.h"
+#include "Engine/Texture2D.h"
+#include "Components//InputComponent.h"
+#include "Materials/Material.h"
+#include "Materials/MaterialInstanceDynamic.h"
+
 
 UMetaMagicTrailManager::UMetaMagicTrailManager()
 {
