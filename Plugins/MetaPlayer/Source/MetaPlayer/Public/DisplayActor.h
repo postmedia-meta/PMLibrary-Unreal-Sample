@@ -10,6 +10,8 @@
 class UArrowComponent;
 class AMultiMediaSyncPlayer;
 class UMediaTexture;
+class UMaterial;
+class UMaterialInstanceDynamic;
 
 UCLASS()
 class METAPLAYER_API ADisplayActor : public AActor

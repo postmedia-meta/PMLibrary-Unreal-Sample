@@ -34,7 +34,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MultiMediaSyncPlayer")
 	bool bLoop;
 
-	UPROPERTY(BlueprintAssignable, Category="Media|Event")
+	UPROPERTY(BlueprintAssignable, Category="MultiMediaSyncPlayer|Event")
 	FOnPlayerStateChangeEvent OnPlayerStateChangeEvent;
 
 private:
@@ -67,6 +67,6 @@ private:
 	void ChangedMediaState(const EMultiMediaState NewState);
 
 public:
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="MultiMediaSyncPlayer")
 	TArray<UMediaTexture*> GetMediaTextures() {return MediaTextures;}
 };

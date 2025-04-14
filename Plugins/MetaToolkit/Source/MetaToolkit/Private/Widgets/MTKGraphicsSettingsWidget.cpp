@@ -3,15 +3,15 @@
 
 #include "Widgets/MTKGraphicsSettingsWidget.h"
 
-#include "Widgets/MTKArrowSwitchWidget.h"
 #include "MTKSaveGame.h"
+#include "TimerManager.h"
+#include "Widgets/MTKArrowSwitchWidget.h"
 #include "Components/Button.h"
 #include "Components/ComboBoxString.h"
 #include "Components/EditableText.h"
 #include "Components/TextBlock.h"
 #include "GameFramework/GameUserSettings.h"
-#include "TimerManager.h"
-#include "Camera/CameraActor.h"
+#include "Engine/GameViewportClient.h"
 
 void UMTKGraphicsSettingsWidget::NativeConstruct()
 {

@@ -6,6 +6,10 @@
 #include "MediaTexture.h"
 #include "MultiMediaSyncPlayer.h"
 #include "Components/ArrowComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Materials/Material.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 // Sets default values
 ADisplayActor::ADisplayActor()

@@ -6,6 +6,9 @@
 #include "MediaTexture.h"
 #include "Components/Image.h"
 #include "Components/PanelWidget.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Materials/Material.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 UDisplayWidget::UDisplayWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {

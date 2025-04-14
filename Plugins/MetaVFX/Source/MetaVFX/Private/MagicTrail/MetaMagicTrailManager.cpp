@@ -15,7 +15,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetRenderingLibrary.h"
 #include "UObject/ConstructorHelpers.h"
-#include "Engine/Texture.h"
 #include "Engine/Texture2D.h"
 #include "Components//InputComponent.h"
 #include "Materials/Material.h"

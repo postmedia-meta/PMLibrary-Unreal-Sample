@@ -8,9 +8,8 @@
 
 class UImage;
 class UMediaTexture;
-/**
- * 
- */
+class UMaterial;
+
 UCLASS()
 class METAPLAYER_API UDisplayWidget : public UUserWidget
 {

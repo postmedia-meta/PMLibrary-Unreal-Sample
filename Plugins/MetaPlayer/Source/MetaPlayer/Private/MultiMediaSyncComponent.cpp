@@ -5,6 +5,8 @@
 #include "MediaPlayer.h"
 #include "MediaTexture.h"
 #include "FileMediaSource.h"
+#include "TimerManager.h"
+#include "Engine/World.h"
 
 UMultiMediaSyncComponent::UMultiMediaSyncComponent()
 {
