@@ -6,7 +6,6 @@
 #include "TimerManager.h"
 #include "FileMediaSource.h"
 #include "MediaPlayer.h"
-#include "MediaTexture.h"
 #include "MemoryPoolObject.h"
 #include "MagicTrail/MetaMagicTrailWidget.h"
 #include "NiagaraActor.h"
@@ -19,6 +18,7 @@
 #include "Components//InputComponent.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "MediaTexture.h"
 
 
 UMetaMagicTrailManager::UMetaMagicTrailManager()

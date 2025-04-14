@@ -107,6 +107,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="MetaMagicTrail")
 	void RemoveColliderWithLiDAR(const int32 ID);
 
+	UFUNCTION(BlueprintCallable, Category="MetaFluidArtManager")
+	TArray<UMetaFluidArtActorComponent*> GetFluidArtActorComponents() { return MetaFluidArtActorComponents; }
+
 private:
 	void OnViewportResized(FViewport* Viewport, unsigned int I);
 

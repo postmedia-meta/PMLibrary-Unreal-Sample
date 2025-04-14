@@ -21,6 +21,9 @@ class METAVFX_API UMetaFluidArtActorComponent : public UNiagaraComponent
 	UPROPERTY()
 	UNiagaraSystem* NiagaraSystem;
 
+	UPROPERTY()
+	UNiagaraSystem* NiagaraSystemWithForce;
+
 	UPROPERTY(VisibleAnywhere, Category="MetaFluidArtActor")
 	TArray<UTexture2D*> Textures;
 
@@ -32,6 +35,9 @@ class METAVFX_API UMetaFluidArtActorComponent : public UNiagaraComponent
 	
 public:
 	UMetaFluidArtActorComponent();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="MetaFluidArtActor")
+	bool bUseForce = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Noise")
 	bool bColliderVisible = true;
@@ -93,6 +99,10 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void PostInitProperties() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 
 public:	
 	UFUNCTION(BlueprintCallable, Category="MetaFluidArtActor")

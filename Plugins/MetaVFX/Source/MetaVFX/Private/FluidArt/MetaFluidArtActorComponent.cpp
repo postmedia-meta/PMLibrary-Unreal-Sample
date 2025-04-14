@@ -28,6 +28,12 @@ UMetaFluidArtActorComponent::UMetaFluidArtActorComponent()
 		NiagaraSystem = NiagaraSystemFinder.Object;
 	}
 	
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> NiagaraSystemWithForceFinder(TEXT("/Script/Niagara.NiagaraSystem'/MetaVFX/FluidArt/VFX/NS_FluidWithForce.NS_FluidWithForce'"));
+	if (NiagaraSystemWithForceFinder.Succeeded())
+	{
+		NiagaraSystemWithForce = NiagaraSystemWithForceFinder.Object;
+	}
+	
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMeshFinder(TEXT("/Script/Engine.StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
 	if (SphereMeshFinder.Succeeded())
 	{
@@ -38,9 +44,18 @@ UMetaFluidArtActorComponent::UMetaFluidArtActorComponent()
 void UMetaFluidArtActorComponent::PostInitProperties()
 {
 	Super::PostInitProperties();
-
+	
 	SetAsset(NiagaraSystem);
 }
+
+#if WITH_EDITOR
+void UMetaFluidArtActorComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	SetAsset(bUseForce ? NiagaraSystemWithForce : NiagaraSystem);
+}
+#endif
 
 // Called when the game starts
 void UMetaFluidArtActorComponent::BeginPlay()
@@ -78,10 +93,16 @@ void UMetaFluidArtActorComponent::BeginPlay()
 	SetVariableFloat(TEXT("TextureChangeDelay"), TextureChangeDelay);
 	SetVariableFloat(TEXT("SpriteScale"), SpriteScale);
 	SetVariableVec2(TEXT("UVStep"), UVStep);
-
-	// Setup noise
-	UpdateNoiseCollider();
-	UpdateNoiseMovement();
+	if (bUseForce)
+	{
+		SetVariableFloat(TEXT("NoiseForce"), NoiseForce);
+		SetVariableFloat(TEXT("NoiseFrequency"), NoiseFrequency);
+	}
+	else
+	{
+		UpdateNoiseCollider();
+		UpdateNoiseMovement();	
+	}
 	
 	GetWorld()->GetTimerManager().SetTimer(TextureChangeHandle, this, &UMetaFluidArtActorComponent::NextTexture, TextureChangeDelay - 0.1f, true);
 
@@ -115,18 +136,27 @@ void UMetaFluidArtActorComponent::NextTexture()
 
 	if (bAutoNoise)
 	{
-		UpdateNoiseCollider();
-
-		ElapsedTime = 0;
-		if (NoiseHandle.IsValid())
+		if (bUseForce)
 		{
-			GetWorld()->GetTimerManager().ClearTimer(NoiseHandle);
-			NoiseHandle.Invalidate();
+			const float NewNoiseForce = FMath::RandRange(-NoiseForce, NoiseForce);
+			const float NewNoiseFrequency = FMath::FRandRange(-NoiseFrequency, NoiseFrequency);
+			SetVariableFloat(TEXT("NoiseForce"), NewNoiseForce);
+			SetVariableFloat(TEXT("NoiseFrequency"), NewNoiseFrequency);
 		}
-		
-		UpdateNoiseMovement();
+		else
+		{
+			UpdateNoiseCollider();
+         
+			ElapsedTime = 0;
+			if (NoiseHandle.IsValid())
+			{
+				GetWorld()->GetTimerManager().ClearTimer(NoiseHandle);
+				NoiseHandle.Invalidate();
+			}
+           
+			UpdateNoiseMovement();
+		}
 	}
-		
 }
 
 void UMetaFluidArtActorComponent::UpdateNoiseMovement()
