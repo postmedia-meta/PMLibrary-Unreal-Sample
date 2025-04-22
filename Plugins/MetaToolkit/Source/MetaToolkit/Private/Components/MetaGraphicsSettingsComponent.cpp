@@ -10,7 +10,7 @@ UMetaGraphicsSettingsComponent::UMetaGraphicsSettingsComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 
-	static ConstructorHelpers::FClassFinder<UUserWidget> GraphicsSettingWidgetClassFinder(TEXT("/Script/UMGEditor.WidgetBlueprint'/MetaToolkit/UIs/WBP_MTKGraphicsSettingWidget.WBP_MTKGraphicsSettingWidget_C'"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> GraphicsSettingWidgetClassFinder(TEXT("/Script/UMGEditor.WidgetBlueprint'/MetaToolkit/Setting/UIs/WBP_MTKGraphicsSettingWidget.WBP_MTKGraphicsSettingWidget_C'"));
 	if (GraphicsSettingWidgetClassFinder.Succeeded())
 	{
 		GraphicsSettingWidgetClass = GraphicsSettingWidgetClassFinder.Class;
@@ -34,7 +34,7 @@ void UMetaGraphicsSettingsComponent::BeginPlay()
 		if (GraphicsSettingsWidget)
 		{
 			GraphicsSettingsWidget->AddToViewport(ZOrder);
-			HideGraphicsSettingsUI();
+			GraphicsSettingsWidget->SetVisibility(ESlateVisibility::Collapsed);
 		}
 	}
 }
@@ -53,4 +53,14 @@ void UMetaGraphicsSettingsComponent::HideGraphicsSettingsUI()
 	{
 		GraphicsSettingsWidget->HideWidget();
 	}
+}
+
+bool UMetaGraphicsSettingsComponent::IsShowWidget()
+{
+	if (GraphicsSettingsWidget)
+	{
+		return GraphicsSettingsWidget->GetVisibility() != ESlateVisibility::Collapsed;
+	}
+
+	return false;
 }

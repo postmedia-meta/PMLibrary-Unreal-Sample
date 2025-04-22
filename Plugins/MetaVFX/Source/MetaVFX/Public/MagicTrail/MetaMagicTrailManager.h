@@ -23,7 +23,9 @@ enum class EMaskShape : uint8
 {
 	Default,
 	Circle,
-	Square
+	Square,
+	Circle_Translucent,
+	Square_Translucent
 };
 
 USTRUCT(Blueprintable)
@@ -71,6 +73,12 @@ class METAVFX_API UMetaMagicTrailManager : public UActorComponent
 
 	UPROPERTY()
 	UMaterial* SquareTrailMaterial;
+
+	UPROPERTY()
+	UMaterial* CircleTranslucentTrailMaterial;
+
+	UPROPERTY()
+	UMaterial* SquareTranslucentTrailMaterial;
 	
 	UPROPERTY()
 	UMaterialInstanceDynamic* SpriteMaterialInstanceDynamic;

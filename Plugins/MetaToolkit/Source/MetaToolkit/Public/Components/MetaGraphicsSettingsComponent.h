@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "Components//ActorComponent.h"
+#include "Components/ActorComponent.h"
 #include "MetaGraphicsSettingsComponent.generated.h"
 
 class UUserWidget;
@@ -12,10 +12,10 @@ UCLASS(ClassGroup = "MetaToolkit", meta = (BlueprintSpawnableComponent))
 class METATOOLKIT_API UMetaGraphicsSettingsComponent : public UActorComponent
 {
 	GENERATED_BODY()
-
-	UMetaGraphicsSettingsComponent();
 	
 public:
+	UMetaGraphicsSettingsComponent();
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Meta Graphics Settings")
 	UMTKGraphicsSettingsWidget* GraphicsSettingsWidget = nullptr;
 
@@ -34,4 +34,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Meta Graphics Settings")
 	void HideGraphicsSettingsUI();
+
+	UFUNCTION(BlueprintPure, Category="Meta Graphics Settings")
+	bool IsShowWidget();
 };

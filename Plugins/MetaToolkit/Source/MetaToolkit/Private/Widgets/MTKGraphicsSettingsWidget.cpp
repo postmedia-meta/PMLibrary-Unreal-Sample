@@ -27,7 +27,7 @@ void UMTKGraphicsSettingsWidget::NativeConstruct()
 	PlayerController = GetOwningPlayer();
 	if (PlayerController == nullptr)
 	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerController is nullptr!!!"));
+		UE_LOG(LogTemp, Error, TEXT("This component can only be used as a component of a player controller."));
 		return;
 	}
 

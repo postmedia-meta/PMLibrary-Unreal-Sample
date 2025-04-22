@@ -41,7 +41,8 @@ public:
 	FOnChangedIndex OnChangedIndex;
 
 protected:
-	virtual void NativeOnInitialized() override;
+	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 
 private:
 	UFUNCTION()
@@ -54,9 +55,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="ArrowSwitchWidget")
 	void SetCurrentIndex(const int32 Index);
 	
-	UFUNCTION(BlueprintCallable, Category="ArrowSwitchWidget")
+	UFUNCTION(BlueprintPure, Category="ArrowSwitchWidget")
 	int32 GetCurrentIndex() { return CurrentIndex; }
 
-	UFUNCTION(BlueprintCallable, Category="ArrowSwitchWidget")
+	UFUNCTION(BlueprintPure, Category="ArrowSwitchWidget")
 	FString GetCurrentStringFromTextBlock() { return TextBlock->GetText().ToString(); }
 };

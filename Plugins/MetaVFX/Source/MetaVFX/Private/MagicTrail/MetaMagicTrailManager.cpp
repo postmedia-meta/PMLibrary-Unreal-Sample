@@ -2,23 +2,25 @@
 
 #include "MagicTrail/MetaMagicTrailManager.h"
 
+#include "MagicTrail/MetaMagicTrailWidget.h"
+#include "MemoryPoolObject.h"
+
 #include "UnrealClient.h"
 #include "TimerManager.h"
 #include "FileMediaSource.h"
 #include "MediaPlayer.h"
-#include "MemoryPoolObject.h"
-#include "MagicTrail/MetaMagicTrailWidget.h"
+#include "MediaTexture.h"
 #include "NiagaraActor.h"
 #include "NiagaraComponent.h"
+#include "Engine/Texture.h"
+#include "Engine/Texture2D.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetRenderingLibrary.h"
 #include "UObject/ConstructorHelpers.h"
-#include "Engine/Texture2D.h"
 #include "Components//InputComponent.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialInstanceDynamic.h"
-#include "MediaTexture.h"
 
 
 UMetaMagicTrailManager::UMetaMagicTrailManager()
@@ -59,6 +61,18 @@ UMetaMagicTrailManager::UMetaMagicTrailManager()
 	if (SquareTrailMaterialFinder.Succeeded())
 	{
 		SquareTrailMaterial = SquareTrailMaterialFinder.Object;
+	}
+	
+	static ConstructorHelpers::FObjectFinder<UMaterial> CircleTranslucentTrailMaterialFinder(TEXT("/Script/Engine.Material'/MetaVFX/MagicTrail/VFX/MagicTrail/Materials/M_Trail_Circle_Translucent.M_Trail_Circle_Translucent'"));
+	if (CircleTranslucentTrailMaterialFinder.Succeeded())
+	{
+		CircleTranslucentTrailMaterial = CircleTranslucentTrailMaterialFinder.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UMaterial> SquareTranslucentTrailMaterialFinder(TEXT("/Script/Engine.Material'/MetaVFX/MagicTrail/VFX/MagicTrail/Materials/M_Trail_Square_Translucent.M_Trail_Square_Translucent'"));
+	if (SquareTranslucentTrailMaterialFinder.Succeeded())
+	{
+		SquareTranslucentTrailMaterial = SquareTranslucentTrailMaterialFinder.Object;
 	}
 }
 
@@ -293,6 +307,12 @@ void UMetaMagicTrailManager::ChangeMaskShape(const EMaskShape Shape)
 		break;
 	case EMaskShape::Square:
 		TrailMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(SquareTrailMaterial, nullptr);
+		break;
+	case EMaskShape::Circle_Translucent:
+		TrailMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(CircleTranslucentTrailMaterial, nullptr);
+		break;
+	case EMaskShape::Square_Translucent:
+		TrailMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(SquareTranslucentTrailMaterial, nullptr);
 		break;
 	}
 	

@@ -6,7 +6,7 @@
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 
-void UMTKArrowSwitchWidget::NativeOnInitialized()
+void UMTKArrowSwitchWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
@@ -18,9 +18,17 @@ void UMTKArrowSwitchWidget::NativeOnInitialized()
 	
 	if (StartIndex >= Elements.Num()) StartIndex = 0;
 	CurrentIndex = StartIndex;
-	
+
 	PrevButton->OnClicked.AddDynamic(this, &UMTKArrowSwitchWidget::ClickPrevButton);
 	NextButton->OnClicked.AddDynamic(this, &UMTKArrowSwitchWidget::ClickNextButton);
+}
+
+void UMTKArrowSwitchWidget::NativeDestruct()
+{
+	Super::NativeDestruct();
+
+	PrevButton->OnClicked.RemoveDynamic(this, &UMTKArrowSwitchWidget::ClickPrevButton);
+	NextButton->OnClicked.RemoveDynamic(this, &UMTKArrowSwitchWidget::ClickNextButton);
 }
 
 void UMTKArrowSwitchWidget::ClickPrevButton()

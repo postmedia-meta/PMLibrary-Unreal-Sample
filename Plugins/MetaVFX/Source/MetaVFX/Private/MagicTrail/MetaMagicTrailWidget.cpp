@@ -166,6 +166,14 @@ void UMetaMagicTrailWidget::InitVariable()
 		MetaMagicTrailComponent->ChangeMaskShape(EMaskShape::Square);
 		MaskShapeComboBox->SetSelectedOption(TEXT("Square"));
 		break;
+	case EMaskShape::Circle_Translucent:
+		MetaMagicTrailComponent->ChangeMaskShape(EMaskShape::Circle_Translucent);
+		MaskShapeComboBox->SetSelectedOption(TEXT("Circle_Translucent"));
+		break;
+	case EMaskShape::Square_Translucent:
+		MetaMagicTrailComponent->ChangeMaskShape(EMaskShape::Square_Translucent);
+		MaskShapeComboBox->SetSelectedOption(TEXT("Square_Translucent"));
+		break;
 	}
 }
 
@@ -216,6 +224,14 @@ void UMetaMagicTrailWidget::ApplySettings()
 	else if (MaskShapeComboBox->GetSelectedOption().Equals(TEXT("Square")))
 	{
 		MetaMagicTrailComponent->ChangeMaskShape(EMaskShape::Square);
+	}
+	else if (MaskShapeComboBox->GetSelectedOption().Equals(TEXT("Circle_Translucent")))
+	{
+		MetaMagicTrailComponent->ChangeMaskShape(EMaskShape::Circle_Translucent);
+	}
+	else if (MaskShapeComboBox->GetSelectedOption().Equals(TEXT("Square_Translucent")))
+	{
+		MetaMagicTrailComponent->ChangeMaskShape(EMaskShape::Square_Translucent);
 	}
 
 	MetaMagicTrailSaveGame->MetaMagicTrailData.InitCreatePoolNum = MetaMagicTrailComponent->InitCreatePoolNum;
