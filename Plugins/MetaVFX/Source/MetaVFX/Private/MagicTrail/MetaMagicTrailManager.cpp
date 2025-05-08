@@ -13,7 +13,6 @@
 #include "NiagaraActor.h"
 #include "NiagaraComponent.h"
 #include "Engine/Texture.h"
-#include "Engine/Texture2D.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetRenderingLibrary.h"

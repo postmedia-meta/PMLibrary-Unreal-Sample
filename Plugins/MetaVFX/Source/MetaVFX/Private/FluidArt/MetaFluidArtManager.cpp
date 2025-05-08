@@ -245,7 +245,7 @@ void UMetaFluidArtManager::ColliderDecreaseScale(const int32 ID, const float Ela
 {
 	if (!FluidCollidersToBeDeallocated.Contains(ID)) return;
 	
-	const float Alpha = ElapsedTime / ScaleDecreaseTime;
+	const float Alpha = ScaleDecreaseTime == 0 ? 1 : ElapsedTime / ScaleDecreaseTime;
 	const float Progress = EaseInOutQuad(Alpha);
 	const float NewScale = FMath::Clamp(FMath::Lerp(InteractionScale, 0, Progress), 0, InteractionScale);
 	
