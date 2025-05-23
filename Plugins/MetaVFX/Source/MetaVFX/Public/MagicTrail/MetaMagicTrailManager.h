@@ -15,7 +15,6 @@ class UMediaTexture;
 class UFileMediaSource;
 class UMaterial;
 class UMaterialInstanceDynamic;
-class UTexture;
 class FViewport;
 
 UENUM(Blueprintable)
